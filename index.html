@@ -1,0 +1,1792 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Leduc Poker — ボット対戦</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Spectral:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E4E9EC; --panel:#FFFFFF; --ink:#18222B; --muted:#5B6873; --line:#C9D2D8;
+  --table:#1F3A4D; --table-edge:#14283A; --table-ink:#E8EEF2; --table-muted:#9FB3C2;
+  --card:#FBFAF7; --card-ink:#18222B; --red:#B3261E;
+  --brass:#C9A227; --fold:#8A96A0; --call:#3E7CB1; --win:#2E7D4F; --lose:#B3261E;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1A22; --panel:#17242E; --ink:#E3E9ED; --muted:#93A1AC; --line:#2A3A46;
+    --table:#1C3647; --table-edge:#0B151C; --win:#5DBB84; --lose:#E5736B; --call:#6AA3D6;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1A22; --panel:#17242E; --ink:#E3E9ED; --muted:#93A1AC; --line:#2A3A46;
+  --table:#1C3647; --table-edge:#0B151C; --win:#5DBB84; --lose:#E5736B; --call:#6AA3D6;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",system-ui,sans-serif;
+  font-size:15px;line-height:1.6}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+
+.app{max-width:1240px;margin:0 auto;padding:14px 16px}
+.top{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+.top h1{font-family:Spectral,Georgia,serif;font-weight:700;font-size:30px;margin:0;letter-spacing:-.01em}
+.top .sub{margin:0;color:var(--muted)}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:20px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
+
+/* table */
+.table{background:var(--table);color:var(--table-ink);border-radius:36px;padding:22px 20px;
+  box-shadow:inset 0 0 0 6px var(--table-edge), inset 0 0 0 7px rgba(201,162,39,.45);
+  display:grid;grid-template-rows:auto auto auto;gap:18px;min-height:460px}
+.seat{display:flex;align-items:center;justify-content:center;gap:18px}
+.seat .meta{min-width:96px}
+.seat .who{font-weight:700;font-size:16px}
+.seat .pos{font-size:13px;color:var(--table-muted)}
+.chips{display:flex;align-items:center;gap:8px;font-size:14px;min-width:96px}
+.chip{width:22px;height:22px;border-radius:50%;background:var(--brass);
+  box-shadow:inset 0 0 0 3px rgba(255,255,255,.35), 0 2px 0 rgba(0,0,0,.35)}
+.center{display:flex;flex-direction:column;align-items:center;gap:10px;padding:8px 0}
+.board{display:flex;align-items:center;gap:20px}
+.pot{font-size:15px;color:var(--table-muted)}
+.pot b{color:var(--table-ink);font-size:20px;margin-left:4px}
+.status{min-height:1.6em;font-weight:500;text-align:center}
+
+.card{width:84px;aspect-ratio:5/7;border-radius:9px;background:var(--card);color:var(--card-ink);
+  position:relative;box-shadow:0 3px 0 rgba(0,0,0,.25),0 8px 18px rgba(0,0,0,.25);flex:none}
+.card .corner{position:absolute;top:6px;left:8px;line-height:1;font-family:Spectral,Georgia,serif;font-weight:700;font-size:17px;text-align:center}
+.card .corner span{display:block;font-size:13px}
+.card .big{position:absolute;inset:0;display:grid;place-items:center;font-family:Spectral,Georgia,serif;font-weight:700;font-size:44px}
+.card.red{color:var(--red)}
+.card.back{background:repeating-linear-gradient(45deg,rgba(201,162,39,.55) 0 2px,transparent 2px 9px),var(--table-edge);
+  border:4px solid var(--card)}
+.card.empty{background:transparent;box-shadow:none;border:2px dashed rgba(232,238,242,.3)}
+.card.flip{animation:flip .35s ease-out}
+@keyframes flip{from{transform:rotateY(90deg)}to{transform:rotateY(0)}}
+@media (prefers-reduced-motion:reduce){.card.flip{animation:none}}
+@media (max-width:520px){.card{width:68px}.card .big{font-size:36px}.table{border-radius:26px;padding:18px 12px;min-height:400px}.seat{gap:10px}}
+
+.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.actions.single{grid-template-columns:1fr}
+.act{border:0;border-radius:12px;padding:14px 10px;font-weight:700;font-size:16px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:2px;transition:transform .08s}
+.act:active:not(:disabled){transform:translateY(1px)}
+.act small{font-weight:400;font-size:12px;opacity:.8}
+.act.f{background:var(--panel);box-shadow:inset 0 0 0 2px var(--line)}
+.act.c{background:var(--call);color:#fff}
+.act.r{background:var(--brass);color:#1d1704}
+.act.n{background:var(--ink);color:var(--bg)}
+.act:disabled{opacity:.35;cursor:not-allowed}
+.wait{grid-column:1/-1;text-align:center;color:var(--muted);margin:10px 0}
+
+.under{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;margin-top:12px;color:var(--muted);font-size:14px}
+.under label{display:flex;gap:6px;align-items:center;cursor:pointer}
+#liveProbs{margin-top:8px}
+
+/* side */
+.side{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+@media (min-width:901px){
+  .side{position:sticky;top:calc(14px + env(safe-area-inset-top,0px));height:calc(100dvh - 92px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:460px}
+}
+.tabs{display:flex;flex:none;border-bottom:1px solid var(--line)}
+.tab{flex:1;border:0;background:none;padding:12px 4px 10px;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);font-weight:700;border-bottom-color:var(--brass)}
+.tab[hidden]{display:none}
+.block.tabpanel{border:0;border-radius:0;flex:1;min-height:0;overflow-y:auto}
+.tabpanel[hidden]{display:none}
+.note.lead{margin:0 0 10px}
+.block{background:var(--panel);border-radius:14px;padding:16px;border:1px solid var(--line)}
+.block h2{font-size:17px;margin:0 0 10px;font-weight:700}
+.radio{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.radio label{display:flex;gap:8px;align-items:center;cursor:pointer}
+.note{font-size:13px;color:var(--muted);margin:6px 0}
+.progress{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin:8px 0}
+.progress i{display:block;height:100%;width:0;background:var(--brass);transition:width .15s}
+textarea{width:100%;min-height:96px;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:8px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;resize:vertical}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.btn{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.msg{font-size:13px;margin-top:8px}
+.msg.err{color:var(--lose)} .msg.ok{color:var(--win)}
+details{margin-top:10px;font-size:13px}
+details summary{cursor:pointer;color:var(--muted)}
+details code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+details pre{background:var(--bg);padding:8px;border-radius:6px;overflow-x:auto;margin:6px 0}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.stats div{background:var(--bg);border-radius:8px;padding:8px 4px}
+.stats b{display:block;font-size:20px;font-family:Spectral,Georgia,serif}
+.stats span{font-size:12px;color:var(--muted)}
+.spark{width:100%;height:70px;display:block;margin-top:10px}
+.pos-v{color:var(--win)} .neg-v{color:var(--lose)}
+
+#log{list-style:none;margin:0;padding:0}
+#log li{border-top:1px solid var(--line);padding:10px 0;font-size:13px}
+#log li:first-child{border-top:0}
+.lh{display:flex;justify-content:space-between;font-weight:700;font-size:14px}
+.seq{color:var(--muted);margin:2px 0 6px}
+.dec{display:grid;grid-template-columns:92px 1fr;gap:6px;align-items:center;margin:3px 0}
+.dec .k{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pbar{display:flex;height:14px;border-radius:4px;overflow:hidden;background:var(--line)}
+.pbar span{display:block;height:100%}
+.pbar .pf{background:var(--fold)} .pbar .pc{background:var(--call)} .pbar .pr{background:var(--brass)}
+.plab{font-size:11px;color:var(--muted);grid-column:2}
+.plab b{color:var(--ink);font-weight:500}
+.miss{color:var(--lose);font-size:11px}
+.empty-log{color:var(--muted);font-size:13px}
+.bots{list-style:none;margin:0 0 6px;padding:0;display:flex;flex-direction:column;gap:6px}
+.bots li{display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.bots li.on{border-color:var(--brass);box-shadow:inset 3px 0 0 var(--brass)}
+.bots label{flex:1;display:flex;gap:8px;align-items:center;cursor:pointer;min-width:0}
+.bots label span{display:flex;flex-direction:column;min-width:0}
+.bots b{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bots small{font-size:12px;color:var(--muted)}
+.bots small.full{color:var(--win)}
+.lnk{border:0;background:none;color:var(--call);cursor:pointer;font-size:13px;padding:4px 6px;border-radius:6px}
+.lnk.del{color:var(--lose)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+#editor{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+#editor h3{font-size:15px;margin:0 0 8px}
+.field{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);margin-bottom:8px}
+.field input{border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:6px 8px;color:var(--ink);font-size:14px}
+.field textarea{color:var(--ink)}
+.cmp-wrap{overflow-x:auto;margin-top:12px}
+table.cmp{width:100%;border-collapse:collapse;font-size:13px}
+.cmp th,.cmp td{padding:5px 4px;text-align:right;border-top:1px solid var(--line);white-space:nowrap}
+.cmp th:first-child,.cmp td:first-child{text-align:left;white-space:normal;word-break:break-all}
+.cmp th{font-weight:500;color:var(--muted);border-top:0}
+.cmp tr.on td{font-weight:700}
+.cmp td.s{color:var(--muted)}
+.field select{border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:6px 8px;color:var(--ink);font-size:13px;max-width:100%}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:420px){.two{grid-template-columns:1fr}}
+.sample{background:var(--bg);border-radius:6px;padding:8px;margin:4px 0 8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;overflow-x:auto;white-space:pre}
+.sample:empty{display:none}
+#pklPanel{border-left:3px solid var(--brass);padding-left:10px;margin:4px 0 10px}
+.stack{font-size:13px;color:var(--table-muted)}
+.stack b{color:var(--table-ink);font-weight:700}
+.xstatus{font-size:14px;margin:0 0 10px;padding:8px 10px;border-radius:8px;background:var(--bg)}
+.xstatus.unk{box-shadow:inset 3px 0 0 var(--lose)}
+.xrow{display:grid;grid-template-columns:96px 1fr 42px;gap:8px;align-items:center;font-size:13px;margin:4px 0}
+.xrow.on span{font-weight:700}
+.xrow b{text-align:right;font-weight:500}
+.xbar{height:10px;background:var(--line);border-radius:5px;overflow:hidden}
+.xbar i{display:block;height:100%;background:var(--call)}
+.xrow.on .xbar i{background:var(--brass)}
+.xgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.xgrid div{background:var(--bg);border-radius:8px;padding:6px 8px;display:flex;flex-direction:column}
+.xgrid span{font-size:11px;color:var(--muted)}
+.xgrid b{font-size:13px;font-weight:500}
+.cmp .s{color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--brass)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1>Leduc Poker</h1>
+    <p class="sub">あなた vs <span id="botName">内蔵CFRボット</span></p>
+  </header>
+
+  <main class="layout">
+    <section>
+      <div class="table">
+        <div class="seat">
+          <div class="meta"><div class="who">ボット</div><div class="pos" id="botPos"></div><div class="stack">持ち点 <b id="botStack">100</b></div></div>
+          <div id="botCard"></div>
+          <div class="chips"><i class="chip"></i><span id="botBet">0</span></div>
+        </div>
+        <div class="center">
+          <div class="board"><div id="pubCard"></div></div>
+          <div class="pot">ポット<b id="pot">0</b></div>
+          <div class="status" id="status" aria-live="polite"></div>
+        </div>
+        <div class="seat">
+          <div class="meta"><div class="who">あなた</div><div class="pos" id="youPos"></div><div class="stack">持ち点 <b id="youStack">100</b></div></div>
+          <div id="youCard"></div>
+          <div class="chips"><i class="chip"></i><span id="youBet">0</span></div>
+        </div>
+      </div>
+      <div class="actions" id="actions"></div>
+      <div class="under">
+        <label><input type="checkbox" id="showProbs"> ボットの行動確率をプレイ中にも表示</label>
+        <span>キー操作: F フォールド / C チェック・コール / R ベット・レイズ / N 次のハンド</span>
+      </div>
+      <div id="liveProbs"></div>
+    </section>
+
+    <aside class="side">
+      <div class="tabs" id="tabs" role="tablist" aria-label="サイドパネル">
+        <button class="tab" role="tab" data-tab="opp" id="tabbtn-opp" aria-selected="true" aria-controls="tab-opp">対戦相手</button>
+        <button class="tab" role="tab" data-tab="model" id="tabbtn-model" aria-selected="false" aria-controls="exploitBlock" hidden>相手モデル</button>
+        <button class="tab" role="tab" data-tab="stats" id="tabbtn-stats" aria-selected="false" aria-controls="tab-stats">成績</button>
+        <button class="tab" role="tab" data-tab="log" id="tabbtn-log" aria-selected="false" aria-controls="tab-log">履歴</button>
+      </div>
+      <section class="block tabpanel" role="tabpanel" data-tab="opp" id="tab-opp" aria-labelledby="tabbtn-opp">
+        <ul class="bots" id="botList"></ul>
+        <div class="progress"><i id="trainBar"></i></div>
+        <p class="note" id="trainMsg">学習を準備しています</p>
+        <div class="row">
+          <button class="btn primary" id="addBot">ボットを追加</button>
+          <button class="btn" id="copyCfr">CFR戦略をJSONでコピー</button>
+        </div>
+        <p class="note" id="botCount"></p>
+        <p class="msg" id="panelMsg"></p>
+        <div id="editor" hidden>
+          <h3 id="editorTitle">ボットを追加</h3>
+          <label class="field">名前<input type="text" id="botNameInput" maxlength="30" autocomplete="off"></label>
+          <label class="field">戦略JSON（pklを選ぶと変換結果が入ります）
+            <textarea id="policyText" placeholder='{"K:": [0, 0.3, 0.7], "Q:r": {"f":0.2,"c":0.7,"r":0.1}, ...}'></textarea>
+          </label>
+          <label class="field">ファイル（.pkl / .json）
+            <input type="file" id="policyFile" accept=".pkl,.pickle,.json,application/json,application/octet-stream" style="font-size:13px;max-width:100%">
+          </label>
+          <div id="pklPanel" hidden>
+            <label class="field">使う表<select id="pklTable"></select></label>
+            <div class="two">
+              <label class="field">3要素の並び<select id="pklOrder"><option value="fcr">fold, call, raise</option><option value="crf">call, raise, fold</option></select></label>
+              <label class="field">数字のカードID<select id="pklCards"><option value="div2">ID÷2（0,1→J）</option><option value="mod3">ID mod 3（0,3→J）</option></select></label>
+            </div>
+            <p class="note" id="pklInfo"></p>
+            <pre class="sample" id="pklSample"></pre>
+          </div>
+          <div class="row">
+            <button class="btn primary" id="saveBot">保存して対戦</button>
+            <button class="btn" id="cancelEdit">キャンセル</button>
+          </div>
+          <p class="msg" id="policyMsg"></p>
+        </div>
+        <details>
+          <summary>戦略JSONの形式とルール</summary>
+          <p>キーは情報集合、値は行動確率です。</p>
+          <pre>&lt;自分のカード&gt;&lt;公開カード&gt;:&lt;1R履歴&gt;/&lt;2R履歴&gt;</pre>
+          <p>カードは <code>J Q K</code>、履歴は <code>c</code>（チェック/コール）と <code>r</code>（ベット/レイズ）。公開カードと <code>/</code> は2ラウンド目のみ付きます。1ラウンド目はBTN、2ラウンド目はBBから行動するので、履歴の長さで手番が決まります。</p>
+          <pre>"K:"       1R BTN、BBに対して fold/call/raise
+"Q:c"      1R BB、BTNがリンプ（コール）
+"Q:r"      1R BB、BTNがレイズ
+"JK:rc/"   2R 公開K、BBの最初の行動
+"QQ:cc/c"  2R BTN、BBがチェック</pre>
+          <p>値は <code>[fold, call, raise]</code> の配列か <code>{"f","c","r"}</code> のオブジェクト。非合法手は無視して正規化します。ボットは最大8体まで登録でき、ブラウザに保存されます。<code>{"policy": {...}}</code> で包んでも読めます。未定義の情報集合では一様ランダムに行動し、履歴に表示します。</p>
+          <p>.pkl を選ぶと、中から「情報集合 → 確率」の表を探してこの形式に変換します。dict、defaultdict、numpy配列、自作クラスのノード（strategy_sum などの属性）、OpenSpielの TabularPolicy に対応しています。キーは、このアプリの形式、OpenSpielの情報状態文字列、カード＋行動列（<code>"KQrcr"</code>、<code>(2, 1, "rc")</code> など）を自動で判別します。ブラウザ内で読むだけで、pkl内のコードは実行しません。PyTorchのモデルなど、表になっていないボットは読み込めません。</p>
+          <p>ルール: ブラインドはBTN（SB）1・BB 2、持ち点は各100。リミット制でベット・レイズ額は1Rが2、2Rが4、各ラウンドのレイズは最大2回（ブラインドは数えない）。1RはBTN、2RはBBから行動し、BTNはハンドごとに交代します。公開カードとペアなら勝ち、なければ高いカードが勝ち、同ランクは引き分け。持ち点が足りないときはオールインになり、どちらかが0点になるとマッチ終了です。</p>
+        </details>
+      </section>
+
+      <section class="block tabpanel" role="tabpanel" data-tab="model" id="exploitBlock" aria-labelledby="tabbtn-model" hidden>
+        <p class="note lead">安全搾取ボットから見たあなた</p>
+        <p class="xstatus" id="xStatus"></p>
+        <div id="xPost"></div>
+        <div class="xgrid" id="xMetrics"></div>
+        <div class="cmp-wrap"><table class="cmp" id="xFeat"></table></div>
+        <div class="two" style="margin-top:12px">
+          <label class="field">安全性 τ: <span id="xTauV"></span> チップ/ハンド
+            <input type="range" id="xTau" min="0" max="0.5" step="0.05">
+          </label>
+          <label class="field">未知タイプの棄却
+            <select id="xReject"><option value="distance">距離ベース</option><option value="entropy">エントロピー</option><option value="both">両方</option><option value="none">しない</option></select>
+          </label>
+        </div>
+        <label class="field">観測窓
+          <select id="xWindow"><option value="0">全ハンド</option><option value="50">直近50ハンド</option><option value="100">直近100ハンド</option><option value="200">直近200ハンド</option></select>
+        </label>
+        <div class="row"><button class="btn" id="xReset">観測をリセット</button></div>
+        <details>
+          <summary>このボットの仕組み</summary>
+          <p>内間・石川「Leduc Pokerにおける相手タイプ推定に基づく安全な搾取戦略の評価」の手法を、このアプリのルール（ブラインド1/2）に合わせて実装しています。</p>
+          <p>相手タイプはNE、OverFold90、VPIP90、ToughCallerの4つです。上の表の4つの特徴量を、タイプごとにBeta-Binomialでモデル化し、ベイズ則で事後確率 w を求めます。搾取成分は各タイプへの最適反応を w で混ぜたもので、実際の方策は π = (1−α)π<sub>NE</sub> + απ<sub>exploit</sub>、α = min(conf, α<sub>cap</sub>) です。</p>
+          <p>α<sub>cap</sub> は、NE相手の期待値低下が τ 以内に収まる最大の α（0.05刻み）で、ゲーム木を厳密に評価して求めます。未知タイプの棄却では、既知4タイプをあなたと同じ観測数でシミュレーションし、その95%を受理するように閾値を決めます。論文と違い、推定と方策はハンドごとに更新します。観測窓は、論文で今後の課題とされている行動の時間変化への簡易的な対応です。</p>
+        </details>
+      </section>
+      <section class="block tabpanel" role="tabpanel" data-tab="stats" id="tab-stats" aria-labelledby="tabbtn-stats" hidden>
+        <p class="note lead" id="statFor"></p>
+        <div class="stats">
+          <div><b id="stHands">0</b><span>ハンド</span></div>
+          <div><b id="stNet">0</b><span>収支（チップ）</span></div>
+          <div><b id="stMean">—</b><span>1ハンド平均 ±95%</span></div>
+        </div>
+        <svg class="spark" id="spark" viewBox="0 0 300 70" preserveAspectRatio="none" aria-label="累積収支の推移"></svg>
+        <div class="row"><button class="btn" id="resetStats">この相手の成績をリセット</button></div>
+        <div class="cmp-wrap"><table class="cmp" id="cmp"></table></div>
+      </section>
+
+      <section class="block tabpanel" role="tabpanel" data-tab="log" id="tab-log" aria-labelledby="tabbtn-log" hidden>
+        <p class="note lead">履歴ではボットの手札と、各判断の確率を公開します。</p>
+        <ol id="log"><li class="empty-log">まだハンドがありません。</li></ol>
+      </section>
+    </aside>
+  </main>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const RANKS = ['J','Q','K'];
+const SUITS = ['♠','♥'];
+const BET = [2,4];
+const AIDX = {f:0,c:1,r:2};
+const rankOf = id => Math.floor(id/2);
+
+/* ---------- storage ---------- */
+const store = {
+  get(k){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } }
+};
+
+/* ---------- game rules ---------- */
+// Round 1 opens facing the big blind, so the first action is fold / call / raise.
+const isFacing = (cur, r) => cur.endsWith('r') || (r === 0 && cur === '');
+function legalActions(cur, nr, r){
+  const a = [];
+  if (isFacing(cur, r)) a.push('f');
+  a.push('c');
+  if (nr < 2) a.push('r');
+  return a;
+}
+// seat 0 = BTN (SB) acts first in round 1; seat 1 = BB acts first in round 2
+const actorOf = (cur, r) => (cur.length + (r === 1 ? 1 : 0)) % 2;
+function infoKey(priv, pub, r, h0, h1){
+  return RANKS[priv] + (r === 1 ? RANKS[pub] : '') + ':' + h0 + (r === 1 ? '/' + h1 : '');
+}
+function showdown(r0, r1, pub){
+  if (r0 === pub && r1 !== pub) return 1;
+  if (r1 === pub && r0 !== pub) return -1;
+  if (r0 > r1) return 1;
+  if (r1 > r0) return -1;
+  return 0;
+}
+
+/* rank-level chance outcomes with weights */
+const DEALS = (() => {
+  const m = new Map();
+  for (let a=0;a<6;a++) for (let b=0;b<6;b++) for (let c=0;c<6;c++){
+    if (a===b||a===c||b===c) continue;
+    const k = rankOf(a)+','+rankOf(b)+','+rankOf(c);
+    m.set(k, (m.get(k)||0) + 1);
+  }
+  return [...m].map(([k,n]) => ({d:k.split(',').map(Number), w:n/120}));
+})();
+
+/* ---------- CFR+ ---------- */
+const nodes = new Map();
+function getNode(k){ let n = nodes.get(k); if(!n){ n = {reg:[0,0,0], sum:[0,0,0]}; nodes.set(k,n); } return n; }
+function regretMatch(n, acts){
+  const s = [0,0,0]; let tot = 0;
+  for (const a of acts){ const i = AIDX[a]; const v = n.reg[i] > 0 ? n.reg[i] : 0; s[i] = v; tot += v; }
+  for (const a of acts){ const i = AIDX[a]; s[i] = tot > 0 ? s[i]/tot : 1/acts.length; }
+  return s;
+}
+function cfr(i, d, r, h0, h1, c0, c1, nr, piI, piO, t){
+  const cur = r === 0 ? h0 : h1;
+  const p = actorOf(cur, r);
+  const acts = legalActions(cur, nr, r);
+  const n = getNode(infoKey(d[p], d[2], r, h0, h1));
+  const s = regretMatch(n, acts);
+  const v = [0,0,0]; let nv = 0;
+  for (const a of acts){
+    const ai = AIDX[a];
+    const np = p === i ? piI*s[ai] : piI;
+    const no = p === i ? piO : piO*s[ai];
+    let u;
+    if (a === 'f'){
+      const u0 = p === 0 ? -c0 : c1; u = i === 0 ? u0 : -u0;
+    } else if (a === 'c'){
+      const n0 = p === 0 ? c1 : c0, n1 = p === 1 ? c0 : c1;
+      const nc = cur + 'c';
+      if (nc.length >= 2){
+        if (r === 0) u = cfr(i, d, 1, nc, '', n0, n1, 0, np, no, t);
+        else { const w = showdown(d[0], d[1], d[2]); const u0 = w > 0 ? n1 : w < 0 ? -n0 : 0; u = i === 0 ? u0 : -u0; }
+      } else {
+        u = r === 0 ? cfr(i, d, 0, nc, h1, n0, n1, nr, np, no, t) : cfr(i, d, 1, h0, nc, n0, n1, nr, np, no, t);
+      }
+    } else {
+      const b = BET[r];
+      const n0 = p === 0 ? c1 + b : c0, n1 = p === 1 ? c0 + b : c1;
+      const nc = cur + 'r';
+      u = r === 0 ? cfr(i, d, 0, nc, h1, n0, n1, nr+1, np, no, t) : cfr(i, d, 1, h0, nc, n0, n1, nr+1, np, no, t);
+    }
+    v[ai] = u; nv += s[ai]*u;
+  }
+  if (p === i){
+    for (const a of acts){
+      const ai = AIDX[a];
+      n.reg[ai] = Math.max(0, n.reg[ai] + piO*(v[ai] - nv));
+      n.sum[ai] += t * piI * s[ai];
+    }
+  }
+  return nv;
+}
+const KEY_ACTS = new Map(); // key -> legal actions
+(function enumerate(){
+  function walk(d, r, h0, h1, nr){
+    const cur = r === 0 ? h0 : h1; const p = actorOf(cur, r);
+    const acts = legalActions(cur, nr, r);
+    KEY_ACTS.set(infoKey(d[p], d[2], r, h0, h1), acts);
+    for (const a of acts){
+      if (a === 'f') continue;
+      const nc = cur + a;
+      if (a === 'c' && nc.length >= 2){ if (r === 0) walk(d, 1, nc, '', 0); continue; }
+      const nnr = a === 'r' ? nr + 1 : nr;
+      if (r === 0) walk(d, 0, nc, h1, nnr); else walk(d, 1, h0, nc, nnr);
+    }
+  }
+  for (const {d} of DEALS) walk(d, 0, '', '', 0);
+})();
+
+function avgStrategy(key, acts){
+  const n = nodes.get(key); const s = [0,0,0];
+  let tot = 0;
+  if (n) for (const a of acts) tot += n.sum[AIDX[a]];
+  for (const a of acts){ const i = AIDX[a]; s[i] = tot > 0 ? n.sum[i]/tot : 1/acts.length; }
+  return s;
+}
+
+const TRAIN_ITERS = 2000;
+let trained = false, trainIter = 0;
+function trainChunk(){
+  const end = Math.min(TRAIN_ITERS, trainIter + 40);
+  for (let t = trainIter + 1; t <= end; t++){
+    for (let i = 0; i < 2; i++) for (const {d, w} of DEALS) cfr(i, d, 0, '', '', 1, 2, 0, 1, w, t);
+  }
+  trainIter = end;
+  $('#trainBar').style.width = (100*trainIter/TRAIN_ITERS) + '%';
+  if (trainIter < TRAIN_ITERS){
+    $('#trainMsg').textContent = `CFR+ を学習中: ${trainIter} / ${TRAIN_ITERS} 反復`;
+    setTimeout(trainChunk, 0);
+  } else {
+    trained = true;
+    $('#trainMsg').textContent = `学習済み: CFR+ ${TRAIN_ITERS} 反復、情報集合 ${KEY_ACTS.size} 個`;
+    exploitInit();
+    loadExploit();
+    updateExploit();
+    renderExploit();
+    renderBots();
+    if (!G.started && (currentId === 'cfr' || currentId === 'exploit')) startHand();
+  }
+}
+
+/* ---------- policies ---------- */
+const MAX_BOTS = 8;
+let bots = [];            // {id, name, src, map, cov}
+let currentId = 'cfr';
+const curBot = () => bots.find(b => b.id === currentId) || null;
+const botLabel = id => id === 'cfr' ? '内蔵CFRボット' : id === 'exploit' ? '安全搾取ボット' : ((bots.find(b => b.id === id) || {}).name || '削除されたボット');
+const esc = t => String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function parsePolicy(text){
+  let o = JSON.parse(text);
+  if (o && typeof o === 'object' && !Array.isArray(o) && o.policy && typeof o.policy === 'object') o = o.policy;
+  if (!o || typeof o !== 'object' || Array.isArray(o)) throw new Error('トップレベルは情報集合をキーにしたオブジェクトにしてください。');
+  const map = new Map();
+  for (const [k0, v] of Object.entries(o)){
+    const parts = k0.trim().split(':');
+    if (parts.length !== 2) throw new Error(`キー "${k0}" に ":" が1つ必要です。`);
+    const k = parts[0].toUpperCase() + ':' + parts[1].toLowerCase();
+    let arr;
+    if (Array.isArray(v)){
+      if (v.length !== 3) throw new Error(`"${k0}" の配列は [fold, call, raise] の3要素にしてください。`);
+      arr = v.map(Number);
+    } else if (v && typeof v === 'object'){
+      arr = [Number(v.f ?? v.fold ?? 0), Number(v.c ?? v.call ?? v.check ?? 0), Number(v.r ?? v.raise ?? v.bet ?? 0)];
+    } else throw new Error(`"${k0}" の値が配列でもオブジェクトでもありません。`);
+    if (arr.some(x => !Number.isFinite(x) || x < 0)) throw new Error(`"${k0}" に負の値か数値でない値があります。`);
+    map.set(k, arr);
+  }
+  return map;
+}
+function coverage(map){
+  let hit = 0;
+  for (const k of KEY_ACTS.keys()) if (map.has(k)) hit++;
+  let unknown = 0;
+  for (const k of map.keys()) if (!KEY_ACTS.has(k)) unknown++;
+  return {hit, total: KEY_ACTS.size, unknown};
+}
+function botPolicy(key, acts){
+  if (currentId === 'exploit') return {s: exploitPolicy(key, acts), missing:false};
+  const b = curBot();
+  if (b){
+    const raw = b.map.get(key);
+    const s = [0,0,0]; let tot = 0;
+    if (raw) for (const a of acts) tot += raw[AIDX[a]];
+    if (!raw || tot <= 0){
+      for (const a of acts) s[AIDX[a]] = 1/acts.length;
+      return {s, missing:true};
+    }
+    for (const a of acts) s[AIDX[a]] = raw[AIDX[a]]/tot;
+    return {s, missing:false};
+  }
+  return {s: avgStrategy(key, acts), missing:false};
+}
+function sample(s, acts){
+  let x = Math.random(), acc = 0;
+  for (const a of acts){ acc += s[AIDX[a]]; if (x < acc) return a; }
+  return acts[acts.length-1];
+}
+function saveBots(){
+  return store.set('leduc-bots-v1', {bots: bots.map(({id, name, src}) => ({id, name, src})), current: currentId});
+}
+
+/* ---------- pickle reader (parses data only, never runs code) ---------- */
+class PyDict{ constructor(){ this.entries = []; } set(k, v){ this.entries.push([k, v]); } }
+class PyObj{ constructor(cls, args){ this.cls = cls; this.args = args || []; this.dict = {}; this.items = null; this.list = null; } }
+class PyGlobal{ constructor(mod, name){ this.mod = normMod(mod); this.name = name; this.full = this.mod + '.' + name; } }
+class NDArray{ constructor(){ this.dtype = null; this.shape = []; this.data = []; } }
+class DType{ constructor(s){ this.str = String(s); this.endian = ''; } }
+const TUPLES = new WeakSet();
+const tup = a => { TUPLES.add(a); return a; };
+const PMARK = Symbol('mark');
+function normMod(m){
+  if (m === '__builtin__') return 'builtins';
+  if (m === 'copy_reg') return 'copyreg';
+  if (m.startsWith('numpy._core')) return 'numpy.core' + m.slice(11);
+  return m;
+}
+function latin1(u){ let s = ''; for (let i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return s; }
+function cardRank(id, mode){ if (!(id >= 0 && id <= 5)) return -1; return mode === 'mod3' ? id % 3 : Math.floor(id / 2); }
+
+function decodeRaw(dt, raw){
+  if (!(raw instanceof Uint8Array)) return Array.isArray(raw) ? raw.map(Number) : [];
+  const str = (dt && dt.str) || 'f8';
+  const m = /^([<>|=]?)([a-zA-Z?])(\d*)$/.exec(str);
+  if (!m) throw new Error('未対応のdtypeです: ' + str);
+  const kind = m[2], size = +m[3] || 1;
+  const le = (m[1] || (dt && dt.endian) || '<') !== '>';
+  const v = new DataView(raw.buffer, raw.byteOffset, raw.byteLength);
+  const n = Math.floor(raw.length / size), out = new Array(n);
+  for (let i = 0; i < n; i++){
+    const o = i * size; let x;
+    if (kind === 'f') x = size === 8 ? v.getFloat64(o, le) : size === 4 ? v.getFloat32(o, le) : NaN;
+    else if (kind === 'i') x = size === 8 ? Number(v.getBigInt64(o, le)) : size === 4 ? v.getInt32(o, le) : size === 2 ? v.getInt16(o, le) : v.getInt8(o);
+    else if (kind === 'u') x = size === 8 ? Number(v.getBigUint64(o, le)) : size === 4 ? v.getUint32(o, le) : size === 2 ? v.getUint16(o, le) : v.getUint8(o);
+    else if (kind === 'b' || kind === '?') x = raw[o] ? 1 : 0;
+    else throw new Error('未対応のdtypeです: ' + str);
+    if (Number.isNaN(x)) throw new Error('未対応のdtypeです: ' + str);
+    out[i] = x;
+  }
+  return out;
+}
+function fromFortran(data, shape){
+  if (shape.length !== 2) return data;
+  const [r, c] = shape, out = new Array(data.length);
+  for (let i = 0; i < r; i++) for (let j = 0; j < c; j++) out[i*c + j] = data[j*r + i];
+  return out;
+}
+const DICT_TYPES = ['collections.defaultdict', 'collections.OrderedDict', 'builtins.dict'];
+function pyNew(cls, args){
+  const f = cls instanceof PyGlobal ? cls.full : '';
+  if (DICT_TYPES.includes(f)) return new PyDict();
+  if (f === 'builtins.list' || f === 'builtins.set' || f === 'builtins.frozenset') return [];
+  if (f === 'numpy.ndarray') return new NDArray();
+  return new PyObj(f || '?', args);
+}
+function pyReduce(fn, args){
+  const f = fn instanceof PyGlobal ? fn.full : '';
+  switch (f){
+    case 'collections.defaultdict': case 'collections.OrderedDict': case 'builtins.dict': {
+      const d = new PyDict(), src = f === 'collections.defaultdict' ? null : args[0];
+      if (src instanceof PyDict) d.entries.push(...src.entries);
+      else if (Array.isArray(src)) for (const p of src) if (Array.isArray(p) && p.length === 2) d.set(p[0], p[1]);
+      return d;
+    }
+    case 'builtins.list': case 'builtins.set': case 'builtins.frozenset': return Array.isArray(args[0]) ? [...args[0]] : [];
+    case 'builtins.tuple': return tup(Array.isArray(args[0]) ? [...args[0]] : []);
+    case '_codecs.encode': {
+      const s = String(args[0] ?? ''), u = new Uint8Array(s.length);
+      for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i) & 255;
+      return u;
+    }
+    case 'builtins.bytes': case 'builtins.bytearray': return args[0] instanceof Uint8Array ? args[0] : new Uint8Array(0);
+    case 'copyreg._reconstructor': return pyNew(args[0], []);
+    case 'numpy.core.multiarray._reconstruct': return new NDArray();
+    case 'numpy.dtype': return new DType(args[0]);
+    case 'numpy.core.multiarray.scalar': return args[1] instanceof Uint8Array ? decodeRaw(args[0], args[1])[0] : args[1];
+    case 'numpy.core.numeric._frombuffer': {
+      const a = new NDArray(); a.dtype = args[1]; a.shape = Array.from(args[2] || []);
+      a.data = decodeRaw(args[1], args[0]);
+      if (args[3] === 'F') a.data = fromFortran(a.data, a.shape);
+      return a;
+    }
+  }
+  if (fn instanceof PyGlobal) return pyNew(fn, args);
+  return new PyObj('?', args);
+}
+function pyBuild(obj, st){
+  if (obj instanceof NDArray){
+    if (Array.isArray(st) && st.length >= 5){
+      const [, shape, dt, fort, raw] = st;
+      obj.shape = Array.from(shape || []); obj.dtype = dt; obj.data = decodeRaw(dt, raw);
+      if (fort) obj.data = fromFortran(obj.data, obj.shape);
+    }
+    return;
+  }
+  if (obj instanceof DType){ if (Array.isArray(st) && typeof st[1] === 'string') obj.endian = st[1]; return; }
+  if (obj instanceof PyObj){
+    const put = s => { if (s instanceof PyDict) for (const [k, v] of s.entries) obj.dict[String(k)] = v; };
+    if (Array.isArray(st) && TUPLES.has(st) && st.length === 2){ put(st[0]); put(st[1]); }
+    else if (st instanceof PyDict) put(st);
+    else obj.dict.__state__ = st;
+  }
+}
+function pySetItem(t, k, v){
+  if (t instanceof PyDict) t.set(k, v);
+  else if (t instanceof PyObj) (t.items || (t.items = new PyDict())).set(k, v);
+}
+function pyAppend(t, items){
+  if (Array.isArray(t)) t.push(...items);
+  else if (t instanceof PyObj) (t.list || (t.list = [])).push(...items);
+}
+
+function unpickle(buffer){
+  const b = new Uint8Array(buffer);
+  const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
+  const td = new TextDecoder('utf-8');
+  const stack = [], memo = new Map(), globals = new Set();
+  let pos = 0;
+  const need = n => { if (pos + n > b.length) throw new Error('ファイルが途中で終わっています。'); };
+  const u8 = () => { need(1); return b[pos++]; };
+  const bytes = n => { need(n); const r = b.subarray(pos, pos + n); pos += n; return r; };
+  const u16 = () => { need(2); const v = dv.getUint16(pos, true); pos += 2; return v; };
+  const u32 = () => { need(4); const v = dv.getUint32(pos, true); pos += 4; return v; };
+  const i32 = () => { need(4); const v = dv.getInt32(pos, true); pos += 4; return v; };
+  const u64 = () => { need(8); const lo = dv.getUint32(pos, true), hi = dv.getUint32(pos + 4, true); pos += 8; return hi * 4294967296 + lo; };
+  const line = () => { const e = b.indexOf(10, pos); if (e < 0) throw new Error('ファイルが途中で終わっています。'); const s = latin1(b.subarray(pos, e)); pos = e + 1; return s.replace(/\r$/, ''); };
+  const popMark = () => { const i = stack.lastIndexOf(PMARK); if (i < 0) throw new Error('pklの構造が壊れています（MARKなし）。'); const it = stack.splice(i + 1); stack.pop(); return it; };
+  const top = () => stack[stack.length - 1];
+  const getMemo = k => { if (!memo.has(k)) throw new Error('pklの構造が壊れています（memo参照）。'); return memo.get(k); };
+  const glob = (m, n) => { const g = new PyGlobal(m, n); globals.add(g.full); return g; };
+  const long = u => {
+    if (!u.length) return 0;
+    let x = 0n;
+    for (let i = u.length - 1; i >= 0; i--) x = (x << 8n) | BigInt(u[i]);
+    if (u[u.length - 1] & 0x80) x -= 1n << BigInt(8 * u.length);
+    return Number(x);
+  };
+  const strRepr = s => {
+    s = s.trim(); const q = s[0];
+    if ((q === "'" || q === '"') && s.endsWith(q)) s = s.slice(1, -1);
+    return s.replace(/\\(x[0-9a-fA-F]{2}|.)/g, (m, e) => e[0] === 'x' && e.length === 3 ? String.fromCharCode(parseInt(e.slice(1), 16)) : ({n:'\n', t:'\t', r:'\r'}[e] || e));
+  };
+  while (pos < b.length){
+    const op = u8();
+    switch (op){
+      case 0x80: u8(); break;
+      case 0x95: u64(); break;
+      case 0x2e: return {value: stack.pop(), globals};
+      case 0x28: stack.push(PMARK); break;
+      case 0x30: stack.pop(); break;
+      case 0x31: popMark(); break;
+      case 0x32: stack.push(top()); break;
+      case 0x4e: stack.push(null); break;
+      case 0x88: stack.push(true); break;
+      case 0x89: stack.push(false); break;
+      case 0x49: { const s = line(); stack.push(s === '01' ? true : s === '00' ? false : parseInt(s, 10)); break; }
+      case 0x4c: stack.push(Number(line().replace(/L$/, ''))); break;
+      case 0x46: stack.push(parseFloat(line())); break;
+      case 0x47: { need(8); stack.push(dv.getFloat64(pos, false)); pos += 8; break; }
+      case 0x4a: stack.push(i32()); break;
+      case 0x4b: stack.push(u8()); break;
+      case 0x4d: stack.push(u16()); break;
+      case 0x8a: { const n = u8(); stack.push(long(bytes(n))); break; }
+      case 0x8b: { const n = i32(); stack.push(long(bytes(n))); break; }
+      case 0x53: stack.push(strRepr(line())); break;
+      case 0x54: stack.push(latin1(bytes(i32()))); break;
+      case 0x55: stack.push(latin1(bytes(u8()))); break;
+      case 0x56: stack.push(line().replace(/\\u([0-9a-fA-F]{4})/g, (m, h) => String.fromCharCode(parseInt(h, 16)))); break;
+      case 0x58: stack.push(td.decode(bytes(u32()))); break;
+      case 0x8c: stack.push(td.decode(bytes(u8()))); break;
+      case 0x8d: stack.push(td.decode(bytes(u64()))); break;
+      case 0x42: stack.push(bytes(u32()).slice()); break;
+      case 0x43: stack.push(bytes(u8()).slice()); break;
+      case 0x8e: case 0x96: stack.push(bytes(u64()).slice()); break;
+      case 0x98: break;
+      case 0x5d: stack.push([]); break;
+      case 0x6c: stack.push(popMark()); break;
+      case 0x29: stack.push(tup([])); break;
+      case 0x74: stack.push(tup(popMark())); break;
+      case 0x85: stack.push(tup([stack.pop()])); break;
+      case 0x86: { const y = stack.pop(), x = stack.pop(); stack.push(tup([x, y])); break; }
+      case 0x87: { const z = stack.pop(), y = stack.pop(), x = stack.pop(); stack.push(tup([x, y, z])); break; }
+      case 0x7d: stack.push(new PyDict()); break;
+      case 0x64: { const it = popMark(), d = new PyDict(); for (let i = 0; i + 1 < it.length; i += 2) d.set(it[i], it[i+1]); stack.push(d); break; }
+      case 0x73: { const v = stack.pop(), k = stack.pop(); pySetItem(top(), k, v); break; }
+      case 0x75: { const it = popMark(), t = top(); for (let i = 0; i + 1 < it.length; i += 2) pySetItem(t, it[i], it[i+1]); break; }
+      case 0x61: { const v = stack.pop(); pyAppend(top(), [v]); break; }
+      case 0x65: case 0x90: { const it = popMark(); pyAppend(top(), it); break; }
+      case 0x8f: stack.push([]); break;
+      case 0x91: stack.push(popMark()); break;
+      case 0x63: { const m = line(), n = line(); stack.push(glob(m, n)); break; }
+      case 0x93: { const n = stack.pop(), m = stack.pop(); stack.push(glob(String(m), String(n))); break; }
+      case 0x52: { const a = stack.pop(), f = stack.pop(); stack.push(pyReduce(f, Array.isArray(a) ? a : [])); break; }
+      case 0x81: { const a = stack.pop(), c = stack.pop(); stack.push(pyNew(c, a)); break; }
+      case 0x92: { stack.pop(); const a = stack.pop(), c = stack.pop(); stack.push(pyNew(c, a)); break; }
+      case 0x62: { const st = stack.pop(); pyBuild(top(), st); break; }
+      case 0x69: { const m = line(), n = line(), a = popMark(); stack.push(pyNew(glob(m, n), a)); break; }
+      case 0x6f: { const it = popMark(), c = it.shift(); stack.push(pyNew(c, it)); break; }
+      case 0x70: memo.set(parseInt(line(), 10), top()); break;
+      case 0x71: memo.set(u8(), top()); break;
+      case 0x72: memo.set(u32(), top()); break;
+      case 0x94: memo.set(memo.size, top()); break;
+      case 0x67: stack.push(getMemo(parseInt(line(), 10))); break;
+      case 0x68: stack.push(getMemo(u8())); break;
+      case 0x6a: stack.push(getMemo(u32())); break;
+      case 0x50: case 0x51: throw new Error('persistent id を使うpkl（PyTorchなど）には対応していません。');
+      case 0x82: case 0x83: case 0x84: throw new Error('copyreg拡張コードを使うpklには対応していません。');
+      case 0x97: throw new Error('out-of-bandバッファを使うpklには対応していません。');
+      default: throw new Error(`pklとして読めません（位置 ${pos-1} に未知のバイト 0x${op.toString(16)}）。`);
+    }
+  }
+  throw new Error('pklの終端（STOP）が見つかりません。');
+}
+
+/* JSON → same structures so files share one pipeline */
+function jsonToPy(o){
+  if (Array.isArray(o)) return o.map(jsonToPy);
+  if (o && typeof o === 'object'){ const d = new PyDict(); for (const [k, v] of Object.entries(o)) d.set(k, jsonToPy(v)); return d; }
+  return o;
+}
+
+/* ---------- strategy table discovery & key conversion ---------- */
+function keyToStr(k){
+  if (typeof k === 'string') return k;
+  if (typeof k === 'number' || typeof k === 'boolean') return String(k);
+  if (k === null) return 'None';
+  if (k instanceof Uint8Array) return latin1(k);
+  if (Array.isArray(k)){ const parts = k.map(keyToStr); return parts.includes(null) ? null : parts.join('|'); }
+  return null;
+}
+function actOf(k){
+  if (k === 0) return 'f'; if (k === 1) return 'c'; if (k === 2) return 'r';
+  if (typeof k !== 'string') return null;
+  const s = k.toLowerCase();
+  if (s === 'f' || s === 'fold') return 'f';
+  if (['c', 'call', 'check', 'k', 'p', 'pass'].includes(s)) return 'c';
+  if (['r', 'raise', 'b', 'bet'].includes(s)) return 'r';
+  return null;
+}
+function numArr(v){
+  if (v instanceof NDArray) return v.shape.length <= 1 ? v.data : null;
+  if (Array.isArray(v) && v.length && v.every(x => typeof x === 'number' || typeof x === 'boolean')) return v.map(Number);
+  return null;
+}
+function toVec(v){
+  const a = numArr(v);
+  if (a) return a.length >= 2 && a.length <= 3 ? {arr: a} : null;
+  const pairs = v instanceof PyDict ? v.entries : (Array.isArray(v) && v.every(p => Array.isArray(p) && p.length === 2) ? v : null);
+  if (pairs && pairs.length >= 1 && pairs.length <= 3){
+    const m = {};
+    for (const [k, x] of pairs){ const act = actOf(k); if (!act || typeof x !== 'number') return null; m[act] = (m[act] || 0) + x; }
+    return {map: m};
+  }
+  return null;
+}
+function fieldsOf(x){
+  if (x instanceof PyObj) return Object.entries(x.dict);
+  if (x instanceof PyDict) return x.entries.filter(([k]) => typeof k === 'string');
+  return null;
+}
+const shortKey = k => { const s = keyToStr(k); return s === null ? '…' : (s.length > 18 ? s.slice(0, 18) + '…' : s); };
+const fieldPrio = n => /avg|average|strategy_?sum|strat_?sum|cumul/i.test(n) ? 3 : /polic|strateg|prob/i.test(n) ? 2 : /regret/i.test(n) ? 0 : 1;
+
+function tabularCheck(fields, path, out){
+  if (!fields) return;
+  let lookup = null, arr = null, lname = '', aname = '';
+  for (const [n, v] of fields){
+    if (v instanceof PyDict && v.entries.length >= 6 && v.entries.every(([k, x]) => keyToStr(k) !== null && Number.isInteger(x))){ lookup = v; lname = n; }
+    if (v instanceof NDArray && v.shape.length === 2 && v.shape[1] >= 2 && v.shape[1] <= 3){ arr = v; aname = n; }
+  }
+  if (!lookup || !arr) return;
+  const [rows, cols] = arr.shape;
+  const entries = lookup.entries.filter(([, i]) => i >= 0 && i < rows).map(([k, i]) => [k, arr.data.slice(i*cols, (i+1)*cols)]);
+  if (entries.length) out.push({path: `${path}.${lname} + .${aname}`, n: entries.length, entries, pick: x => x, prio: 4});
+}
+
+function findTables(root){
+  const out = [], seen = new Set(), q = [[root, 'pkl', 0]];
+  while (q.length && seen.size < 50000){
+    const [v, path, depth] = q.shift();
+    if (v === null || typeof v !== 'object' || seen.has(v)) continue;
+    seen.add(v);
+    if (v instanceof PyDict){
+      const keyed = v.entries.filter(([k]) => keyToStr(k) !== null);
+      if (keyed.length >= 6){
+        let direct = 0;
+        for (const [, x] of keyed) if (toVec(x)) direct++;
+        if (direct > 0 && direct >= keyed.length * 0.8){
+          out.push({path, n: direct, entries: keyed, pick: x => x, prio: 2});
+        } else {
+          const counts = new Map();
+          for (const [, x] of keyed){ const f = fieldsOf(x); if (f) for (const [n, val] of f) if (toVec(val)) counts.set(n, (counts.get(n) || 0) + 1); }
+          for (const [name, c] of counts) if (c >= keyed.length * 0.8){
+            out.push({path: `${path} → .${name}`, n: c, entries: keyed, prio: fieldPrio(name),
+              pick: x => { const f = fieldsOf(x); if (!f) return null; for (const [n, val] of f) if (n === name) return val; return null; }});
+          }
+        }
+      }
+      tabularCheck(fieldsOf(v), path, out);
+      if (depth < 8) for (const [k, x] of v.entries.slice(0, 3000)) if (x && typeof x === 'object') q.push([x, `${path}[${shortKey(k)}]`, depth + 1]);
+    } else if (v instanceof PyObj){
+      tabularCheck(Object.entries(v.dict), path, out);
+      if (depth < 8){
+        for (const [k, x] of Object.entries(v.dict)) q.push([x, `${path}.${k}`, depth + 1]);
+        if (v.items) q.push([v.items, path, depth + 1]);
+        if (v.list) q.push([v.list, path, depth + 1]);
+      }
+    } else if (Array.isArray(v) && depth < 8){
+      v.slice(0, 300).forEach((x, i) => { if (x && typeof x === 'object') q.push([x, `${path}[${i}]`, depth + 1]); });
+    }
+  }
+  return out.sort((a, b) => b.prio - a.prio || b.n - a.n);
+}
+
+/* canonical key from cards + full action sequence; the round split follows from the rules */
+function buildKey(priv, pub, acts){
+  if (!(priv >= 0 && priv <= 2)) return null;
+  let r = 0, h0 = '', h1 = '', nr = 0;
+  for (const a of acts){
+    const cur = r === 0 ? h0 : h1;
+    if (r === 2 || !legalActions(cur, nr, r).includes(a)) return null;
+    const nc = cur + a;
+    if (r === 0) h0 = nc; else h1 = nc;
+    if (a === 'r') nr++;
+    else if (nc.length >= 2){ if (r === 0){ r = 1; nr = 0; } else r = 2; }
+  }
+  if (r === 2) return null;
+  if (r === 1 && !(pub >= 0 && pub <= 2)) return null;
+  return infoKey(priv, pub, r, h0, h1);
+}
+const KEY_FORMATS = {
+  canonical: {
+    label: 'このアプリの形式',
+    conv(raw){
+      const parts = raw.trim().split(':');
+      if (parts.length !== 2) return null;
+      const k = parts[0].toUpperCase() + ':' + parts[1].toLowerCase();
+      return KEY_ACTS.has(k) ? k : null;
+    }
+  },
+  openspiel: {
+    label: 'OpenSpielの情報状態文字列',
+    conv(raw, o){
+      const pm = /\[Private:\s*(-?\d+)/.exec(raw);
+      if (!pm) return null;
+      const pub = /\[Public:\s*(-?\d+)/.exec(raw);
+      const r1 = ((/\[Round1:([^\]]*)\]/.exec(raw) || [])[1] || '').trim();
+      const r2 = ((/\[Round2:([^\]]*)\]/.exec(raw) || [])[1] || '').trim();
+      const toA = t => t.split(/\s+/).filter(Boolean).map(x => x === '1' ? 'c' : x === '2' ? 'r' : '?').join('');
+      const acts = toA(r1) + toA(r2);
+      if (acts.includes('?')) return null;
+      return buildKey(cardRank(+pm[1], o.cards), pub && +pub[1] >= 0 ? cardRank(+pub[1], o.cards) : null, acts);
+    }
+  },
+  generic: {
+    label: 'カード＋行動列（自動判別）',
+    conv(raw, o){
+      let s = raw.replace(/-\d+/g, ' ');
+      let cards;
+      if (/[JQK]/.test(s)){
+        cards = [...s.matchAll(/[JQK]/g)].map(m => 'JQK'.indexOf(m[0]));
+        s = s.replace(/[JQK]/g, ' ');
+      } else {
+        cards = [...s.matchAll(/\d/g)].map(m => o.digitRank ? +m[0] : cardRank(+m[0], o.cards));
+      }
+      s = s.replace(/\d+/g, ' ');
+      if (!cards.length || cards.some(c => !(c >= 0 && c <= 2))) return null;
+      const acts = s.split(/[^a-z]+/).filter(t => t && /^[crbkp]+$/.test(t)).join('').replace(/[kp]/g, 'c').replace(/b/g, 'r');
+      return buildKey(cards[0], cards.length > 1 ? cards[1] : null, acts);
+    }
+  }
+};
+function vecToFCR(vec, acts, order){
+  if (vec.map) return [vec.map.f || 0, vec.map.c || 0, vec.map.r || 0];
+  const a = vec.arr;
+  if (a.length === 3) return order === 'crf' ? [a[2], a[0], a[1]] : [a[0], a[1], a[2]];
+  const k = acts.join('');
+  if (k === 'cr') return [0, a[0], a[1]];
+  if (k === 'fc') return [a[0], a[1], 0];
+  return null;
+}
+function convertTable(t, o){
+  const raws = t.entries.map(([k, v]) => [keyToStr(k), v]);
+  const digits = raws.map(([s]) => s.replace(/-\d+/g, '').match(/\d/g) || []).flat().map(Number);
+  const opt = {cards: o.cards, digitRank: digits.length > 0 && Math.max(...digits) <= 2};
+  let best = null;
+  for (const [id, f] of Object.entries(KEY_FORMATS)){
+    const res = {fmt: id, label: f.label, policy: {}, mapped: 0, unmapped: 0, badVec: 0, samples: []};
+    for (const [raw, v] of raws){
+      const key = f.conv(raw, opt);
+      if (!key){ res.unmapped++; continue; }
+      const vec = toVec(t.pick(v));
+      const fcr = vec && vecToFCR(vec, KEY_ACTS.get(key), o.order);
+      if (!fcr){ res.badVec++; continue; }
+      const legal = KEY_ACTS.get(key);
+      const prev = res.policy[key] || [0, 0, 0];
+      res.policy[key] = prev.map((x, i) => x + (legal.includes('fcr'[i]) ? Math.max(0, fcr[i]) : 0));
+      res.mapped++;
+      if (res.samples.length < 4) res.samples.push([raw, key]);
+    }
+    res.cover = Object.keys(res.policy).length;
+    if (!best || res.cover > best.cover) best = res;
+  }
+  for (const k of Object.keys(best.policy)){
+    const v = best.policy[k], s = v[0] + v[1] + v[2];
+    best.policy[k] = v.map(x => s > 0 ? Math.round(x / s * 1e6) / 1e6 : 0);
+  }
+  return best;
+}
+function policyToJSON(p){
+  const ks = Object.keys(p).sort((a, b) => a.length - b.length || a.localeCompare(b));
+  return '{\n' + ks.map(k => ` ${JSON.stringify(k)}: [${p[k].join(', ')}]`).join(',\n') + '\n}';
+}
+
+/* ---------- safe exploit bot (相手タイプ推定に基づく安全な搾取) ---------- */
+const XTYPES = ['NE', 'OverFold90', 'VPIP90', 'ToughCaller'];
+const XFEAT_NAMES = ['フォールド率（ベットに対して）', 'VPIP率', 'ノンフォールド率（2R、ベットに対して）', 'レイズ率'];
+const KAPPA = 30;                                   // Beta concentration per type and feature
+const ALPHA_GRID = Array.from({length: 21}, (_, i) => Math.round(i * 5) / 100);
+const X = {ready:false, ne:null, neGet:null, types:[], br:[], rates:[], beta:[], brEV:[], obs:[], st:null,
+  settings:{tau:0.2, reject:'distance', window:0}};
+
+function lgamma(z){
+  if (z < 0.5) return Math.log(Math.PI / Math.sin(Math.PI * z)) - lgamma(1 - z);
+  z -= 1;
+  const c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313,
+    -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+  let x = c[0];
+  for (let i = 1; i < 9; i++) x += c[i] / (z + i);
+  const t = z + 7.5;
+  return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(x);
+}
+const lbeta = (a, b) => lgamma(a) + lgamma(b) - lgamma(a + b);
+const logBB = (k, n, a, b) => lgamma(n + 1) - lgamma(k + 1) - lgamma(n - k + 1) + lbeta(k + a, n - k + b) - lbeta(a, b);
+
+function mulberry32(seed){
+  return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+function normalSample(rng){ let u = 0; while (!u) u = rng(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rng()); }
+function gammaSample(rng, k){
+  if (k < 1) return gammaSample(rng, k + 1) * Math.pow(rng() || 1e-12, 1 / k);
+  const d = k - 1/3, c = 1 / Math.sqrt(9 * d);
+  for (;;){
+    let x, v;
+    do { x = normalSample(rng); v = 1 + c * x; } while (v <= 0);
+    v = v * v * v;
+    const u = rng();
+    if (u < 1 - 0.0331 * x ** 4 || Math.log(u) < 0.5 * x * x + d * (1 - v + Math.log(v))) return d * v;
+  }
+}
+const betaSample = (rng, a, b) => { const x = gammaSample(rng, a), y = gammaSample(rng, b); return x / (x + y); };
+function binomSample(rng, n, p){
+  if (n <= 80){ let k = 0; for (let i = 0; i < n; i++) if (rng() < p) k++; return k; }
+  return Math.min(n, Math.max(0, Math.round(n * p + Math.sqrt(n * p * (1 - p)) * normalSample(rng))));
+}
+
+/* one step in the game tree: terminal utility for seat 0, or the next state */
+function child(d, r, h0, h1, c0, c1, nr, p, a){
+  const cur = r === 0 ? h0 : h1;
+  if (a === 'f') return {u: p === 0 ? -c0 : c1};
+  if (a === 'c'){
+    const n0 = p === 0 ? c1 : c0, n1 = p === 1 ? c0 : c1, nc = cur + 'c';
+    if (nc.length >= 2){
+      if (r === 0) return {s: [1, nc, '', n0, n1, 0]};
+      const w = showdown(d[0], d[1], d[2]);
+      return {u: w > 0 ? n1 : w < 0 ? -n0 : 0};
+    }
+    return {s: r === 0 ? [0, nc, h1, n0, n1, nr] : [1, h0, nc, n0, n1, nr]};
+  }
+  const b = BET[r], n0 = p === 0 ? c1 + b : c0, n1 = p === 1 ? c0 + b : c1, nc = cur + 'r';
+  return {s: r === 0 ? [0, nc, h1, n0, n1, nr + 1] : [1, h0, nc, n0, n1, nr + 1]};
+}
+
+/* exact expected value for seat 0 when g0 plays seat 0 and g1 plays seat 1 (getters: key -> [f,c,r]) */
+function evalU0(g0, g1){
+  const ev = (d, r, h0, h1, c0, c1, nr) => {
+    const cur = r === 0 ? h0 : h1, p = actorOf(cur, r), acts = legalActions(cur, nr, r);
+    const s = (p === 0 ? g0 : g1)(infoKey(d[p], d[2], r, h0, h1));
+    let v = 0;
+    for (const a of acts){
+      const pa = s[AIDX[a]]; if (!pa) continue;
+      const res = child(d, r, h0, h1, c0, c1, nr, p, a);
+      v += pa * (res.u !== undefined ? res.u : ev(d, ...res.s));
+    }
+    return v;
+  };
+  let tot = 0;
+  for (const {d, w} of DEALS) tot += w * ev(d, 0, '', '', 1, 2, 0);
+  return tot;
+}
+/* average over both seats of the bot's EV against the NE strategy (Risk_NE,EV) */
+const riskVsNE = g => 0.5 * (evalU0(g, X.neGet) - evalU0(X.neGet, g));
+const evVs = (g, opp) => 0.5 * (evalU0(g, opp) - evalU0(opp, g));
+
+/* exact best response for seat i against a fixed opponent getter */
+function bestResponse(i, opp){
+  const br = new Map();
+  const node = (deals, r, h0, h1, c0, c1, nr) => {
+    if (!deals.length) return 0;
+    const cur = r === 0 ? h0 : h1, p = actorOf(cur, r), acts = legalActions(cur, nr, r);
+    if (p === i){
+      let best = -Infinity, bestA = acts[0];
+      for (const a of acts){ const v = step(deals, r, h0, h1, c0, c1, nr, p, a); if (v > best + 1e-12){ best = v; bestA = a; } }
+      br.set(infoKey(deals[0].d[i], deals[0].d[2], r, h0, h1), bestA);
+      return best;
+    }
+    let tot = 0;
+    for (const a of acts){
+      const nd = [];
+      for (const x of deals){ const w = x.w * opp(infoKey(x.d[p], x.d[2], r, h0, h1))[AIDX[a]]; if (w > 0) nd.push({d: x.d, w}); }
+      tot += step(nd, r, h0, h1, c0, c1, nr, p, a);
+    }
+    return tot;
+  };
+  const step = (deals, r, h0, h1, c0, c1, nr, p, a) => {
+    if (!deals.length) return 0;
+    const res = child(deals[0].d, r, h0, h1, c0, c1, nr, p, a);
+    let tot = 0;
+    if (res.u !== undefined){
+      for (const x of deals){ const u0 = child(x.d, r, h0, h1, c0, c1, nr, p, a).u; tot += x.w * (i === 0 ? u0 : -u0); }
+      return tot;
+    }
+    if (r === 0 && res.s[0] === 1){   // the public card splits the information sets
+      const g = new Map();
+      for (const x of deals){ if (!g.has(x.d[2])) g.set(x.d[2], []); g.get(x.d[2]).push(x); }
+      for (const grp of g.values()) tot += node(grp, ...res.s);
+      return tot;
+    }
+    return node(deals, ...res.s);
+  };
+  for (let ci = 0; ci < 3; ci++) node(DEALS.filter(x => x.d[i] === ci).map(x => ({d: x.d, w: x.w})), 0, '', '', 1, 2, 0);
+  return br;
+}
+
+/* fixed opponent models derived from NE */
+function makeTypeTable(name){
+  const t = new Map();
+  for (const [key, acts] of KEY_ACTS){
+    const ne = X.ne.get(key), facing = acts.includes('f'), r = key.includes('/') ? 1 : 0, canR = acts.includes('r');
+    const cont = mass => { const c = ne[1], rr = canR ? ne[2] : 0, tot = c + rr; return tot > 0 ? [mass * c / tot, mass * rr / tot] : [mass, 0]; };
+    let s = ne.slice();
+    if (name === 'OverFold90' && facing){ const [c, rr] = cont(0.1); s = [0.9, c, rr]; }
+    else if (name === 'VPIP90' && facing && r === 0){ const [c, rr] = cont(0.9); s = [0.1, c, rr]; }
+    else if (name === 'ToughCaller') s = facing ? [0.1, canR ? 0.6 : 0.9, canR ? 0.3 : 0] : [0, canR ? 0.7 : 1, canR ? 0.3 : 0];
+    t.set(key, s);
+  }
+  return t;
+}
+
+/* expected feature rates of a type playing against NE (both seats) — same definitions as live recording */
+function expectedFeatures(typeGet){
+  const acc = [[0,0],[0,0],[0,0],[0,0]];   // [successes, trials] for F, V, N, R
+  for (const j of [0, 1]){
+    const walk = (d, r, h0, h1, c0, c1, nr, reach, had, vp) => {
+      const cur = r === 0 ? h0 : h1, p = actorOf(cur, r), acts = legalActions(cur, nr, r), key = infoKey(d[p], d[2], r, h0, h1);
+      const s = p === j ? typeGet(key) : X.ne.get(key), facing = acts.includes('f');
+      if (p === j){
+        acc[3][1] += reach; acc[3][0] += reach * s[2];
+        if (facing){ acc[0][1] += reach; acc[0][0] += reach * s[0]; if (r === 1){ acc[2][1] += reach; acc[2][0] += reach * (1 - s[0]); } }
+      }
+      for (const a of acts){
+        const pa = s[AIDX[a]]; if (!pa) continue;
+        const nreach = reach * pa;
+        const nh = had || (p === j && r === 0);
+        const nv = vp || (p === j && r === 0 && (a === 'r' || (a === 'c' && facing)));
+        const res = child(d, r, h0, h1, c0, c1, nr, p, a);
+        if (r === 0 && (res.u !== undefined || res.s[0] === 1) && nh){ acc[1][1] += nreach; if (nv) acc[1][0] += nreach; }
+        if (res.s) walk(d, ...res.s, nreach, nh, nv);
+      }
+    };
+    for (const {d, w} of DEALS) walk(d, 0, '', '', 1, 2, 0, w * 0.5, false, false);
+  }
+  return acc.map(([s, n]) => n > 0 ? s / n : 0.5);
+}
+
+function exploitInit(){
+  X.ne = new Map();
+  for (const [k, acts] of KEY_ACTS) X.ne.set(k, avgStrategy(k, acts));
+  X.neGet = k => X.ne.get(k);
+  X.types = XTYPES.map(n => n === 'NE' ? X.ne : makeTypeTable(n));
+  X.br = X.types.map(t => {
+    const g = k => t.get(k), m = new Map();
+    for (const i of [0, 1]) for (const [k, a] of bestResponse(i, g)) m.set(k, a);
+    const tbl = new Map();
+    for (const k of KEY_ACTS.keys()){ const a = m.get(k); tbl.set(k, a ? [0,1,2].map(x => x === AIDX[a] ? 1 : 0) : X.ne.get(k)); }
+    return tbl;
+  });
+  X.rates = X.types.map(t => expectedFeatures(k => t.get(k)));
+  X.beta = X.rates.map(rs => rs.map(p => { const q = Math.min(0.98, Math.max(0.02, p)); return [KAPPA * q, KAPPA * (1 - q)]; }));
+  X.brEV = X.types.map((t, i) => evVs(k => X.br[i].get(k), k => t.get(k)));
+  X.neEV = X.types.map(t => evVs(X.neGet, k => t.get(k)));
+  X.ready = true;
+}
+
+/* observations: one record per hand [F trials, F folds, V trials, V vpip, N trials, N nonfold, R trials, R raises] */
+function featKN(c){ return [[c[1], c[0]], [c[3], c[2]], [c[5], c[4]], [c[7], c[6]]]; }
+function posteriorOf(kn){
+  const ll = XTYPES.map((_, t) => { let s = 0; for (let f = 0; f < 4; f++){ const [k, n] = kn[f]; if (n > 0){ const [a, b] = X.beta[t][f]; s += logBB(k, n, a, b); } } return s; });
+  const m = Math.max(...ll), e = ll.map(x => Math.exp(x - m)), z = e.reduce((a, b) => a + b, 0), w = e.map(x => x / z);
+  const H = -w.reduce((s, x) => s + (x > 0 ? x * Math.log(x) : 0), 0);
+  return {w, conf: 1 - H / Math.log(XTYPES.length), minD: Math.min(...ll.map(x => -x)), dist: ll.map(x => -x)};
+}
+/* thresholds: simulate known types with the same trial counts, accept 95% (paper: 5th pct of conf, 95th pct of min distance) */
+function calibrate(kn){
+  let seed = 2026; for (const [, n] of kn) seed = (Math.imul(seed, 31) + n) >>> 0;
+  const rng = mulberry32(seed), confs = [], ds = [];
+  for (let t = 0; t < XTYPES.length; t++) for (let s = 0; s < 250; s++){
+    const sim = kn.map(([, n], f) => { if (!n) return [0, 0]; const [a, b] = X.beta[t][f]; return [binomSample(rng, n, betaSample(rng, a, b)), n]; });
+    const r = posteriorOf(sim); confs.push(r.conf); ds.push(r.minD);
+  }
+  confs.sort((a, b) => a - b); ds.sort((a, b) => a - b);
+  return {thConf: confs[Math.floor(0.05 * confs.length)], thD: ds[Math.ceil(0.95 * ds.length) - 1]};
+}
+function obsCounts(){
+  const w = X.settings.window, recs = w > 0 ? X.obs.slice(-w) : X.obs, c = [0,0,0,0,0,0,0,0];
+  for (const r of recs) for (let i = 0; i < 8; i++) c[i] += r[i];
+  return {c, n: recs.length};
+}
+function updateExploit(){
+  if (!X.ready) return;
+  const {c, n} = obsCounts(), kn = featKN(c);
+  const st = {n, kn, w: XTYPES.map(() => 1 / XTYPES.length), conf: 0, minD: 0, dist: null, thConf: null, thD: null,
+    rejEntropy: false, rejDist: false, unknown: false, alphaCap: 0, alpha: 0, risk: 0, mix: null, map: -1};
+  if (n && kn.some(([, t]) => t > 0)){
+    Object.assign(st, posteriorOf(kn), calibrate(kn));
+    const rj = X.settings.reject;
+    st.rejEntropy = st.conf < st.thConf;
+    st.rejDist = st.minD > st.thD;
+    st.unknown = ((rj === 'entropy' || rj === 'both') && st.rejEntropy) || ((rj === 'distance' || rj === 'both') && st.rejDist);
+    const mix = new Map();
+    for (const k of KEY_ACTS.keys()){
+      const v = [0, 0, 0];
+      X.br.forEach((tb, t) => { const b = tb.get(k); for (let i = 0; i < 3; i++) v[i] += st.w[t] * b[i]; });
+      mix.set(k, v);
+    }
+    st.mix = mix;
+    const polA = a => k => { const ne = X.ne.get(k), m = mix.get(k); return [0,1,2].map(i => (1 - a) * ne[i] + a * m[i]); };
+    for (const a of ALPHA_GRID) if (riskVsNE(polA(a)) >= -X.settings.tau - 1e-9) st.alphaCap = Math.max(st.alphaCap, a);
+    st.alpha = st.unknown ? 0 : Math.min(st.conf, st.alphaCap);
+    st.risk = st.alpha > 0 ? riskVsNE(polA(st.alpha)) : 0;
+    st.map = st.w.indexOf(Math.max(...st.w));
+  }
+  X.st = st;
+}
+function exploitPolicy(key, acts){
+  const st = X.st, ne = X.ne.get(key) || [1/3, 1/3, 1/3];
+  let v = ne;
+  if (st && st.alpha > 0 && st.mix){ const m = st.mix.get(key); v = [0,1,2].map(i => (1 - st.alpha) * ne[i] + st.alpha * m[i]); }
+  const s = [0, 0, 0]; let tot = 0;
+  for (const a of acts) tot += v[AIDX[a]];
+  for (const a of acts) s[AIDX[a]] = tot > 0 ? v[AIDX[a]] / tot : 1 / acts.length;
+  return s;
+}
+
+/* ---------- game state ---------- */
+const START_STACK = 100, BLINDS = [1, 2];
+const G = {started:false, hand:0, humanSeat:0, cards:[0,0], pub:0, r:0, h:['',''], c:[1,2], nr:0,
+  over:false, result:null, actions:[], decisions:[], reveal:false, pubShown:false, botTimer:null};
+const M = {you:START_STACK, bot:START_STACK, over:false, winner:null, no:1};
+const toAct = () => actorOf(G.h[G.r], G.r);
+const botSeat = () => 1 - G.humanSeat;
+const stackOf = seat => seat === G.humanSeat ? M.you : M.bot;
+const remOf = seat => stackOf(seat) - G.c[seat];
+const posName = seat => seat === 0 ? 'BTN（SB）' : 'BB';
+
+function ready(){ return currentId === 'cfr' ? trained : currentId === 'exploit' ? X.ready : !!curBot(); }
+function resetMatch(){ M.you = START_STACK; M.bot = START_STACK; M.over = false; M.winner = null; M.no++; }
+
+function startHand(){
+  if (!ready()) return;
+  clearTimeout(G.botTimer);
+  if (M.over) resetMatch();
+  const deck = [0,1,2,3,4,5];
+  for (let i = deck.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [deck[i],deck[j]] = [deck[j],deck[i]]; }
+  G.started = true;
+  G.humanSeat = G.hand % 2;   // the button alternates every hand
+  G.hand++;
+  G.cards = [deck[0], deck[1]]; G.pub = deck[2];
+  G.r = 0; G.h = ['','']; G.nr = 0;
+  G.c = [Math.min(BLINDS[0], stackOf(0)), Math.min(BLINDS[1], stackOf(1))];
+  G.over = false; G.result = null; G.actions = []; G.decisions = []; G.reveal = false; G.pubShown = false;
+  G.flipYou = true; G.flipPub = false;
+  G.obs = [0,0,0,0,0,0,0,0]; G.obsHad = false; G.obsVp = false;
+  if (bettingClosed()){ runout(); return; }
+  render();
+  maybeBot();
+}
+
+// someone is all-in and nobody owes a response
+function bettingClosed(){
+  for (const s of [0,1]) if (remOf(s) <= 0 && G.c[1-s] >= G.c[s]) return true;
+  return false;
+}
+function legalNow(){
+  const p = toAct();
+  let acts = legalActions(G.h[G.r], G.nr, G.r);
+  const toCall = G.c[1-p] - G.c[p];
+  if (remOf(1-p) <= 0 || remOf(p) <= toCall) acts = acts.filter(a => a !== 'r');
+  return acts;
+}
+
+function actionName(a, facing, r){
+  if (a === 'f') return 'フォールド';
+  if (a === 'c') return facing ? 'コール' : 'チェック';
+  return facing || r === 0 ? 'レイズ' : 'ベット';
+}
+
+function apply(a, seat){
+  const cur = G.h[G.r];
+  const other = 1 - seat;
+  const before = G.c[seat];
+  const entry = {r:G.r, seat, a, name:actionName(a, G.c[other] > G.c[seat], G.r)};
+  G.actions.push(entry);
+  if (seat === G.humanSeat && currentId === 'exploit'){   // features of the human for opponent modelling
+    const facing = G.c[other] > G.c[seat], o = G.obs;
+    o[6]++; if (a === 'r') o[7]++;
+    if (facing){ o[0]++; if (a === 'f') o[1]++; if (G.r === 1){ o[4]++; if (a !== 'f') o[5]++; } }
+    if (G.r === 0){ G.obsHad = true; if (a === 'r' || (a === 'c' && facing)) G.obsVp = true; }
+  }
+  if (a === 'f'){ finish({type:'fold', loser:seat}); return; }
+  if (a === 'c'){
+    G.c[seat] = Math.min(G.c[other], stackOf(seat));
+    G.h[G.r] = cur + 'c';
+  } else {
+    G.c[seat] = Math.min(G.c[other] + BET[G.r], stackOf(seat));
+    G.h[G.r] = cur + 'r';
+    G.nr++;
+  }
+  if (G.c[seat] > before && remOf(seat) <= 0) entry.name += '（オールイン）';
+  if (bettingClosed()){ runout(); return; }
+  if (a === 'c' && G.h[G.r].length >= 2){
+    if (G.r === 0){ G.r = 1; G.nr = 0; G.pubShown = true; G.flipPub = true; }
+    else { finish({type:'showdown'}); return; }
+  }
+  render();
+  maybeBot();
+}
+function runout(){
+  if (!G.pubShown){ G.pubShown = true; G.flipPub = true; }
+  finish({type:'showdown', allin:true});
+}
+
+function maybeBot(){
+  if (G.over || toAct() === G.humanSeat) return;
+  clearTimeout(G.botTimer);
+  G.botTimer = setTimeout(botAct, 600);
+}
+function botAct(){
+  if (G.over || toAct() === G.humanSeat) return;
+  const seat = botSeat();
+  const acts = legalNow();
+  const key = infoKey(rankOf(G.cards[seat]), rankOf(G.pub), G.r, G.h[0], G.h[1]);
+  const {s, missing} = botPolicy(key, acts);
+  const a = sample(s, acts);
+  G.decisions.push({key, acts, s, a, missing, facing:G.c[1-seat] > G.c[seat], r:G.r});
+  apply(a, seat);
+}
+
+function humanAct(a){
+  if (G.over || !G.started || toAct() !== G.humanSeat) return;
+  if (!legalNow().includes(a)) return;
+  apply(a, G.humanSeat);
+}
+
+function finish(res){
+  G.over = true;
+  const hs = G.humanSeat, bs = botSeat();
+  const amt = Math.min(G.c[0], G.c[1]);   // anything above the smaller stake goes back
+  let delta;
+  if (res.type === 'fold'){
+    delta = res.loser === hs ? -amt : amt;
+  } else {
+    G.reveal = true; G.pubShown = true;
+    const w = showdown(rankOf(G.cards[0]), rankOf(G.cards[1]), rankOf(G.pub));
+    const hw = hs === 0 ? w : -w;
+    delta = hw > 0 ? amt : hw < 0 ? -amt : 0;
+  }
+  res.delta = delta;
+  G.result = res;
+  M.you += delta; M.bot -= delta;
+  if (M.you <= 0 || M.bot <= 0){ M.over = true; M.winner = M.you > 0 ? 'you' : 'bot'; }
+  recordStats(delta, M.over ? M.winner : null);
+  if (currentId === 'exploit' && X.ready){
+    G.obs[2] = G.obsHad ? 1 : 0; G.obs[3] = G.obsVp ? 1 : 0;
+    X.obs.push(G.obs);
+    if (X.obs.length > 3000) X.obs.shift();
+    saveExploit();
+    updateExploit();
+    renderExploit();
+    renderBots();
+  }
+  addLog();
+  render();
+}
+
+/* ---------- stats ---------- */
+let stats = store.get('leduc-stats-v3') || {};   // v3: blinds 1/2, 100-point matches
+function statsFor(id){
+  if (!stats[id]) stats[id] = {hands:0, net:0, sumSq:0, series:[]};
+  return stats[id];
+}
+const curStats = () => statsFor(currentId);
+const saveStats = () => store.set('leduc-stats-v3', stats);
+function meanText(s){
+  if (!s.hands) return '—';
+  const m = s.net / s.hands;
+  const sign = m >= 0 ? '+' : '';
+  if (s.hands < 2) return sign + m.toFixed(2);
+  const v = Math.max(0, (s.sumSq - s.hands*m*m) / (s.hands - 1));
+  return `${sign}${m.toFixed(2)} ±${(1.96*Math.sqrt(v/s.hands)).toFixed(2)}`;
+}
+function recordStats(d, matchWinner){
+  const s = curStats();
+  s.hands++; s.net += d; s.sumSq += d*d;
+  if (matchWinner === 'you') s.mw = (s.mw || 0) + 1;
+  if (matchWinner === 'bot') s.ml = (s.ml || 0) + 1;
+  s.series.push(s.net);
+  if (s.series.length > 1000) s.series.shift();
+  saveStats();
+  renderStats();
+}
+function renderStats(){
+  const s = curStats();
+  $('#statFor').textContent = '対 ' + botLabel(currentId);
+  $('#stHands').textContent = s.hands;
+  const net = $('#stNet');
+  net.textContent = (s.net > 0 ? '+' : '') + s.net;
+  net.className = s.net > 0 ? 'pos-v' : s.net < 0 ? 'neg-v' : '';
+  $('#stMean').textContent = meanText(s);
+
+  const ids = ['cfr', 'exploit', ...bots.map(b => b.id)];
+  $('#cmp').innerHTML = `<tr><th>相手</th><th>マッチ</th><th>ハンド</th><th>収支</th><th>平均 ±95%</th></tr>` +
+    ids.map(id => {
+      const t = stats[id] || {hands:0, net:0, sumSq:0};
+      const cls = t.net > 0 ? 'pos-v' : t.net < 0 ? 'neg-v' : '';
+      return `<tr class="${id === currentId ? 'on' : ''}"><td>${esc(botLabel(id))}</td><td>${t.mw || 0}勝${t.ml || 0}敗</td><td>${t.hands}</td>
+        <td class="${cls}">${t.net > 0 ? '+' : ''}${t.net}</td><td class="s">${meanText(t)}</td></tr>`;
+    }).join('');
+
+  const sv = $('#spark');
+  const pts = [0, ...s.series];
+  if (pts.length < 2){ sv.innerHTML = ''; return; }
+  const lo = Math.min(0, ...pts), hi = Math.max(0, ...pts), span = (hi - lo) || 1;
+  const y = v => 66 - (v - lo) / span * 62;
+  const xs = i => i / (pts.length - 1) * 300;
+  const line = pts.map((v,i) => `${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const col = s.net >= 0 ? 'var(--win)' : 'var(--lose)';
+  sv.innerHTML = `<line x1="0" x2="300" y1="${y(0)}" y2="${y(0)}" stroke="var(--line)" stroke-dasharray="3 3"/>
+    <polyline points="${line}" fill="none" stroke="${col}" stroke-width="2" vector-effect="non-scaling-stroke"/>`;
+}
+
+/* ---------- rendering ---------- */
+function cardHTML(id, mode, flip){
+  if (mode === 'empty') return '<div class="card empty" aria-label="未公開"></div>';
+  if (mode === 'back') return '<div class="card back" aria-label="伏せられたカード"></div>';
+  const r = RANKS[rankOf(id)], s = SUITS[id % 2];
+  return `<div class="card ${id % 2 ? 'red' : ''} ${flip ? 'flip' : ''}" aria-label="${r}${s}">
+    <div class="corner">${r}<span>${s}</span></div><div class="big">${r}</div></div>`;
+}
+function probBar(s, acts){
+  const pct = a => (s[AIDX[a]] * 100);
+  const lab = acts.map(a => `${a.toUpperCase()} <b>${s[AIDX[a]].toFixed(2)}</b>`).join('　');
+  return `<div class="pbar"><span class="pf" style="width:${pct('f')}%"></span><span class="pc" style="width:${pct('c')}%"></span><span class="pr" style="width:${pct('r')}%"></span></div>
+    <div class="plab">${lab}</div>`;
+}
+
+function render(){
+  const hs = G.humanSeat, bs = botSeat();
+  $('#botName').textContent = botLabel(currentId);
+  if (!G.started){
+    $('#youCard').innerHTML = cardHTML(0, 'empty');
+    $('#botCard').innerHTML = cardHTML(0, 'empty');
+    $('#pubCard').innerHTML = cardHTML(0, 'empty');
+    $('#pot').textContent = 0; $('#youBet').textContent = 0; $('#botBet').textContent = 0;
+    $('#youStack').textContent = M.you; $('#botStack').textContent = M.bot;
+    $('#youPos').textContent = ''; $('#botPos').textContent = '';
+    $('#status').textContent = ready() ? '' : 'ボットを学習しています…';
+    renderActions(); return;
+  }
+  $('#youPos').textContent = posName(hs);
+  $('#botPos').textContent = posName(bs);
+  $('#youCard').innerHTML = cardHTML(G.cards[hs], 'up', G.flipYou);
+  $('#botCard').innerHTML = G.reveal ? cardHTML(G.cards[bs], 'up', true) : cardHTML(0, 'back');
+  $('#pubCard').innerHTML = G.pubShown ? cardHTML(G.pub, 'up', G.flipPub) : cardHTML(0, 'empty');
+  G.flipYou = false; G.flipPub = false;
+  $('#pot').textContent = G.c[0] + G.c[1];
+  $('#youBet').textContent = G.c[hs];
+  $('#botBet').textContent = G.c[bs];
+  $('#youStack').textContent = G.over ? M.you : remOf(hs);
+  $('#botStack').textContent = G.over ? M.bot : remOf(bs);
+
+  let st = '';
+  if (G.over){
+    const d = G.result.delta;
+    const tail = d > 0 ? `あなたの勝ち +${d}` : d < 0 ? `あなたの負け ${d}` : '引き分け';
+    if (G.result.type === 'fold'){
+      st = (G.result.loser === hs ? 'あなたがフォールド。' : 'ボットがフォールド。') + tail;
+    } else {
+      const pr = rankOf(G.pub);
+      const desc = id => RANKS[rankOf(id)] + (rankOf(id) === pr ? 'のペア' : '');
+      st = `${G.result.allin ? 'オールイン。' : ''}ショーダウン: あなた ${desc(G.cards[hs])} 対 ボット ${desc(G.cards[bs])}。${tail}`;
+    }
+    if (M.over) st += `　マッチ終了: ${M.winner === 'you' ? 'あなた' : 'ボット'}の勝ち`;
+  } else {
+    const last = G.actions[G.actions.length-1];
+    const prefix = last && last.seat === bs ? `ボットは${last.name}。` : '';
+    st = toAct() === hs ? prefix + 'あなたの番です' : 'ボットが考えています…';
+  }
+  $('#status').textContent = st;
+  renderActions();
+  renderLive();
+}
+
+function renderActions(){
+  const el = $('#actions');
+  el.className = 'actions';
+  if (!ready()){
+    el.innerHTML = '<p class="wait">学習が終わると対戦できます</p>';
+    return;
+  }
+  if (!G.started || G.over){
+    el.className = 'actions single';
+    el.innerHTML = `<button class="act n" data-a="n">${M.over ? `新しいマッチ（${START_STACK}点ずつ）` : G.started ? '次のハンド' : '対戦を始める'}<small>N</small></button>`;
+    return;
+  }
+  const hs = G.humanSeat;
+  const mine = toAct() === hs;
+  const cur = G.h[G.r];
+  const acts = legalNow();
+  const rem = remOf(hs);
+  const toCall = Math.min(G.c[1-hs] - G.c[hs], rem);
+  const raisePay = Math.min(G.c[1-hs] + BET[G.r], stackOf(hs)) - G.c[hs];
+  const ai = n => n >= rem ? '（オールイン）' : '';
+  const lbl = {
+    f: ['フォールド', 'F'],
+    c: toCall > 0 ? [`コール ${toCall}${ai(toCall)}`, 'C'] : ['チェック', 'C'],
+    r: [`${toCall > 0 || G.r === 0 ? 'レイズ' : 'ベット'} ${raisePay}${ai(raisePay)}`, 'R']
+  };
+  el.innerHTML = ['f','c','r'].map(a =>
+    `<button class="act ${a}" data-a="${a}" ${mine && acts.includes(a) ? '' : 'disabled'}>${lbl[a][0]}<small>${lbl[a][1]}</small></button>`
+  ).join('');
+}
+
+function renderLive(){
+  const el = $('#liveProbs');
+  if (!$('#showProbs').checked || !G.decisions.length || G.over){ el.innerHTML = ''; return; }
+  const d = G.decisions[G.decisions.length-1];
+  el.innerHTML = `<div class="dec"><span class="k" title="${d.key}">${d.key}</span><div>${probBar(d.s, d.acts)}</div></div>`;
+}
+
+let logItems = [];
+function addLog(){
+  const hs = G.humanSeat, bs = botSeat();
+  const seq = [0,1].map(r => {
+    const xs = G.actions.filter(x => x.r === r);
+    if (!xs.length) return null;
+    return `${r+1}R ` + xs.map(x => `${x.seat === hs ? 'あなた' : 'ボット'}:${x.name}`).join(' → ');
+  }).filter(Boolean).join(' ｜ ');
+  const pubShown = G.actions.some(x => x.r === 1) || G.result.type === 'showdown';
+  const d = G.result.delta;
+  const decs = G.decisions.map(x =>
+    `<div class="dec"><span class="k" title="${x.key}">${x.key}</span><div>${probBar(x.s, x.acts)}</div>
+     <div class="plab">選択: ${actionName(x.a, x.facing, x.r)}${x.missing ? ' <span class="miss">未定義→一様</span>' : ''}</div></div>`
+  ).join('');
+  logItems.unshift(`<li><div class="lh"><span>#${G.hand}　あなた ${RANKS[rankOf(G.cards[hs])]} / ボット ${RANKS[rankOf(G.cards[bs])]}${pubShown ? ' / 公開 ' + RANKS[rankOf(G.pub)] : ''}</span>
+    <span class="${d > 0 ? 'pos-v' : d < 0 ? 'neg-v' : ''}">${d > 0 ? '+' : ''}${d}</span></div>
+    <div class="seq">対 ${esc(botLabel(currentId))}　あなた ${hs === 0 ? 'BTN' : 'BB'}　${seq}<br>持ち点 あなた ${M.you} / ボット ${M.bot}${M.over ? `　マッチ終了（${M.winner === 'you' ? 'あなた' : 'ボット'}の勝ち）` : ''}</div>${decs}</li>`);
+  if (logItems.length > 60) logItems.pop();
+  $('#log').innerHTML = logItems.join('');
+}
+
+/* ---------- events ---------- */
+$('#actions').addEventListener('click', e => {
+  const b = e.target.closest('button[data-a]');
+  if (!b || b.disabled) return;
+  if (b.dataset.a === 'n') startHand(); else humanAct(b.dataset.a);
+});
+document.addEventListener('keydown', e => {
+  if (e.target.matches('textarea, input[type="text"]') || e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (k === 'n'){ if (ready() && (G.over || !G.started)) startHand(); }
+  else if (k === 'f' || k === 'c' || k === 'r') humanAct(k);
+});
+$('#showProbs').addEventListener('change', renderLive);
+
+function msg(sel, text, cls){ const el = $(sel); el.textContent = text; el.className = 'msg ' + (cls || ''); }
+
+function renderBots(){
+  const items = [{id:'cfr', name:'内蔵CFR+ボット', note: trained ? 'ブラウザで学習済み' : '学習中…', full:false, custom:false},
+    {id:'exploit', name:'安全搾取ボット（相手タイプ推定）', note: X.ready ? `あなたの観測 ${X.obs.length} ハンド` : '準備中…', full:false, custom:false},
+    ...bots.map(b => ({id:b.id, name:b.name, note:`${b.cov.hit} / ${b.cov.total} 情報集合`, full:b.cov.hit === b.cov.total, custom:true}))];
+  $('#botList').innerHTML = items.map(it => `<li class="${it.id === currentId ? 'on' : ''}">
+      <label><input type="radio" name="bot" value="${it.id}" ${it.id === currentId ? 'checked' : ''}>
+        <span><b>${esc(it.name)}</b><small class="${it.full ? 'full' : ''}">${it.note}</small></span></label>
+      ${it.custom ? `<button class="lnk" data-edit="${it.id}">編集</button><button class="lnk del" data-del="${it.id}">削除</button>` : ''}
+    </li>`).join('');
+  $('#addBot').disabled = bots.length >= MAX_BOTS;
+  $('#botCount').textContent = `自作ボット ${bots.length} / ${MAX_BOTS} 体`;
+}
+
+function selectBot(id){
+  currentId = id;
+  clearTimeout(G.botTimer);
+  G.started = false; G.over = false;
+  resetMatch();
+  saveBots();
+  renderBots(); renderStats(); render(); renderExploit();
+}
+
+$('#botList').addEventListener('change', e => {
+  if (e.target.name === 'bot') selectBot(e.target.value);
+});
+$('#botList').addEventListener('click', e => {
+  const ed = e.target.closest('[data-edit]'), del = e.target.closest('[data-del]');
+  if (ed) openEditor(ed.dataset.edit);
+  if (del){
+    const b = bots.find(x => x.id === del.dataset.del);
+    if (!b || !confirm(`「${b.name}」と、その成績を削除しますか？`)) return;
+    bots = bots.filter(x => x !== b);
+    delete stats[b.id]; saveStats();
+    if (editingId === b.id) closeEditor();
+    msg('#panelMsg', `「${b.name}」を削除しました。`, '');
+    selectBot(currentId === b.id ? 'cfr' : currentId);
+  }
+});
+
+let editingId = null;
+function openEditor(id){
+  editingId = id;
+  const b = id ? bots.find(x => x.id === id) : null;
+  $('#editorTitle').textContent = b ? `「${b.name}」を編集` : 'ボットを追加';
+  $('#botNameInput').value = b ? b.name : `ボット ${bots.length + 1}`;
+  $('#policyText').value = b ? b.src : '';
+  $('#policyFile').value = '';
+  hidePkl();
+  $('#saveBot').textContent = b ? '保存' : '保存して対戦';
+  msg('#policyMsg', '', '');
+  $('#editor').hidden = false;
+  $('#botNameInput').focus();
+  $('#botNameInput').select();
+}
+function closeEditor(){ editingId = null; $('#editor').hidden = true; }
+$('#addBot').addEventListener('click', () => openEditor(null));
+$('#cancelEdit').addEventListener('click', closeEditor);
+
+let pklState = null;
+function hidePkl(){ pklState = null; $('#pklPanel').hidden = true; $('#pklSample').textContent = ''; $('#pklInfo').textContent = ''; }
+$('#policyFile').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => loadFileData(f.name, rd.result);
+  rd.onerror = () => msg('#policyMsg', 'ファイルを読めませんでした。別のファイルを選んでください。', 'err');
+  rd.readAsArrayBuffer(f);
+});
+function loadFileData(name, buf){
+  hidePkl();
+  const u = new Uint8Array(buf);
+  const nm = $('#botNameInput');
+  if (!editingId && /^ボット \d+$/.test(nm.value)) nm.value = name.replace(/\.(json|pkl|pickle)$/i, '').slice(0, 30);
+  if (u[0] === 0x50 && u[1] === 0x4b){
+    msg('#policyMsg', 'zip形式のファイル（PyTorchの .pt / .pth など）は読み込めません。戦略の表をpickleかJSONで保存してください。', 'err'); return;
+  }
+  let root, globals = new Set();
+  if (u[0] === 0x7b || u[0] === 0x5b || u[0] === 0xef){
+    try{ root = jsonToPy(JSON.parse(new TextDecoder().decode(u).replace(/^\uFEFF/, ''))); }
+    catch(err){ msg('#policyMsg', 'JSONを読み込めません: ' + err.message, 'err'); return; }
+  } else {
+    try{ const r = unpickle(buf); root = r.value; globals = r.globals; }
+    catch(err){ msg('#policyMsg', 'pklを読み込めません: ' + err.message, 'err'); return; }
+  }
+  const tables = findTables(root);
+  if (!tables.length){
+    const cls = [...globals].filter(g => !/^(builtins|numpy|collections|copyreg|_codecs)\./.test(g));
+    const torch = cls.some(g => g.startsWith('torch'));
+    msg('#policyMsg', torch
+      ? 'PyTorchのテンソルやモデルは読み込めません。各情報集合の行動確率を dict にして保存し直してください。'
+      : '「情報集合 → 確率」の表が見つかりませんでした。' + (cls.length ? `含まれていたクラス: ${cls.slice(0, 4).join(', ')}。` : '') + 'dict（キー: 情報集合、値: 確率の配列）を含む形で保存してください。', 'err');
+    return;
+  }
+  pklState = {tables, name};
+  $('#pklTable').innerHTML = tables.map((t, i) => `<option value="${i}">${esc(t.path)}（${t.n}件）</option>`).join('');
+  $('#pklPanel').hidden = false;
+  applyPkl();
+}
+function applyPkl(){
+  if (!pklState) return;
+  const t = pklState.tables[+$('#pklTable').value || 0];
+  const res = convertTable(t, {order: $('#pklOrder').value, cards: $('#pklCards').value});
+  if (!res.cover){
+    $('#pklInfo').textContent = ''; $('#pklSample').textContent = '';
+    const ex = t.entries.slice(0, 2).map(([k]) => keyToStr(k)).join('", "');
+    msg('#policyMsg', `この表のキー（例: "${ex}"）を情報集合として解釈できませんでした。別の表を選ぶか、キーの形式を「戦略JSONの形式」に合わせて保存し直してください。`, 'err');
+    return;
+  }
+  $('#policyText').value = policyToJSON(res.policy);
+  $('#pklInfo').textContent = `キーの形式: ${res.label}。${res.cover} / ${KEY_ACTS.size} 情報集合を変換` +
+    (res.unmapped ? `、解釈できないキー ${res.unmapped} 件` : '') + (res.badVec ? `、確率として読めない値 ${res.badVec} 件` : '') + '。';
+  if (res.fmt === 'openspiel') $('#pklInfo').textContent += ' 注意: OpenSpielの leduc_poker はアンテ方式で、このアプリのブラインド方式とは情報集合の意味が異なります。';
+  $('#pklSample').textContent = res.samples.map(([r, k]) => `${r.length > 46 ? r.slice(0, 46) + '…' : r}  →  ${k}`).join('\n');
+  msg('#policyMsg', `${pklState.name} を変換しました。内容を確かめて保存してください。`, res.cover === KEY_ACTS.size ? 'ok' : '');
+}
+['#pklTable', '#pklOrder', '#pklCards'].forEach(sel => $(sel).addEventListener('change', applyPkl));
+
+$('#saveBot').addEventListener('click', () => {
+  const name = $('#botNameInput').value.trim();
+  const src = $('#policyText').value;
+  if (!name){ msg('#policyMsg', '名前を入力してください。', 'err'); return; }
+  if (!src.trim()){ msg('#policyMsg', 'JSONを貼り付けるか、ファイルを選んでください。', 'err'); return; }
+  let map;
+  try{ map = parsePolicy(src); }
+  catch(err){ msg('#policyMsg', 'JSONを読み込めません: ' + err.message, 'err'); return; }
+  const cov = coverage(map);
+  let id = editingId;
+  if (id){
+    const b = bots.find(x => x.id === id);
+    Object.assign(b, {name, src, map, cov});
+  } else {
+    if (bots.length >= MAX_BOTS){ msg('#policyMsg', `登録できるのは ${MAX_BOTS} 体までです。不要なボットを削除してください。`, 'err'); return; }
+    id = 'b' + Date.now().toString(36);
+    bots.push({id, name, src, map, cov});
+  }
+  const ok = saveBots();
+  closeEditor();
+  msg('#panelMsg',
+    `「${name}」を保存しました: ${cov.hit} / ${cov.total} 情報集合をカバー` +
+    (cov.unknown ? `（ルール上存在しないキー ${cov.unknown} 個は無視）` : '') +
+    (ok ? '' : '。ブラウザの保存容量が足りないため、再読み込みすると消えます'),
+    ok ? (cov.hit === cov.total ? 'ok' : '') : 'err');
+  selectBot(id);
+});
+
+$('#copyCfr').addEventListener('click', async () => {
+  if (!trained){ msg('#panelMsg', '学習が終わってからコピーできます。', 'err'); return; }
+  const o = {};
+  for (const [k, acts] of [...KEY_ACTS].sort((a,b) => a[0].length - b[0].length || a[0].localeCompare(b[0]))){
+    o[k] = avgStrategy(k, acts).map(x => Math.round(x*10000)/10000);
+  }
+  const txt = JSON.stringify(o, null, 1);
+  try{ await navigator.clipboard.writeText(txt); msg('#panelMsg', `${Object.keys(o).length} 個の情報集合をコピーしました。形式の見本にも使えます。`, 'ok'); }
+  catch(e){
+    openEditor(null);
+    $('#botNameInput').value = 'CFRのコピー';
+    $('#policyText').value = txt;
+    msg('#policyMsg', 'クリップボードに書き込めないため、ここに貼り付けました。', '');
+  }
+});
+
+$('#resetStats').addEventListener('click', () => {
+  if (!confirm(`「${botLabel(currentId)}」との成績をリセットしますか？`)) return;
+  stats[currentId] = {hands:0, net:0, sumSq:0, series:[]};
+  saveStats();
+  renderStats();
+});
+
+/* ---------- side panel tabs ---------- */
+let activeTab = 'opp';
+function showTab(id){
+  activeTab = id;
+  document.querySelectorAll('#tabs .tab').forEach(b => { const on = b.dataset.tab === id; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
+  document.querySelectorAll('.tabpanel').forEach(p => { p.hidden = p.dataset.tab !== id; });
+}
+$('#tabs').addEventListener('click', e => { const b = e.target.closest('.tab'); if (b) showTab(b.dataset.tab); });
+$('#tabs').addEventListener('keydown', e => {
+  if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+  const tabs = [...document.querySelectorAll('#tabs .tab')].filter(b => !b.hidden);
+  const i = tabs.findIndex(b => b.dataset.tab === activeTab);
+  const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+  showTab(next.dataset.tab); next.focus(); e.preventDefault();
+});
+
+/* ---------- safe exploit: storage & panel ---------- */
+function loadExploit(){
+  const v = store.get('leduc-exploit-v1');
+  if (v && Array.isArray(v.obs)) X.obs = v.obs.filter(r => Array.isArray(r) && r.length === 8);
+  if (v && v.settings) Object.assign(X.settings, v.settings);
+}
+function saveExploit(){ store.set('leduc-exploit-v1', {obs: X.obs, settings: X.settings}); }
+const f2 = x => (x >= 0 ? '+' : '') + x.toFixed(2);
+function renderExploit(){
+  const tabBtn = $('#tabbtn-model');
+  tabBtn.hidden = currentId !== 'exploit';
+  if (tabBtn.hidden){ if (activeTab === 'model') showTab('opp'); return; }
+  $('#xTau').value = X.settings.tau; $('#xTauV').textContent = X.settings.tau.toFixed(2);
+  $('#xReject').value = X.settings.reject; $('#xWindow').value = String(X.settings.window);
+  const st = X.st;
+  if (!X.ready || !st){
+    $('#xStatus').textContent = 'ボットの学習が終わると分析を始めます。';
+    $('#xPost').innerHTML = ''; $('#xMetrics').innerHTML = ''; $('#xFeat').innerHTML = '';
+    return;
+  }
+  let status;
+  if (!st.n) status = 'まだ観測がありません。最初はNE方策で対戦します。';
+  else if (st.unknown){
+    const why = [st.rejDist && (X.settings.reject !== 'entropy') ? '距離が閾値を超えた' : '', st.rejEntropy && (X.settings.reject !== 'distance') ? '確信度が閾値未満' : ''].filter(Boolean).join('、');
+    status = `既知の4タイプに当てはまらないと判定しました（${why}）。誤った搾取を避けるため、NE方策で対戦しています。`;
+  } else if (st.alpha <= 0) status = `いちばん近いのは ${XTYPES[st.map]} ですが、搾取強度は0です。NE方策で対戦しています。`;
+  else status = `あなたを ${XTYPES[st.map]} に近いと推定し、搾取強度 α = ${st.alpha.toFixed(2)} で対戦しています。`;
+  $('#xStatus').textContent = status;
+  $('#xStatus').className = 'xstatus' + (st.unknown ? ' unk' : '');
+  $('#xPost').innerHTML = XTYPES.map((t, i) => `<div class="xrow ${i === st.map && !st.unknown && st.n ? 'on' : ''}">
+      <span>${t}</span><div class="xbar"><i style="width:${(st.w[i]*100).toFixed(1)}%"></i></div><b>${(st.w[i]*100).toFixed(0)}%</b></div>`).join('');
+  const th = v => v === null ? '—' : v.toFixed(2);
+  const rj = X.settings.reject;
+  $('#xMetrics').innerHTML = [
+    ['観測ハンド', `${st.n}${X.settings.window ? `（直近${X.settings.window}）` : ''}`],
+    ['確信度 conf', `${st.conf.toFixed(2)}${rj === 'entropy' || rj === 'both' ? ` / 閾値 ${th(st.thConf)}` : ''}`],
+    ['最小距離 d', st.n ? `${st.minD.toFixed(1)}${rj === 'distance' || rj === 'both' ? ` / 閾値 ${st.thD === null ? '—' : st.thD.toFixed(1)}` : ''}` : '—'],
+    ['α上限 α_cap', `${st.alphaCap.toFixed(2)}（τ = ${X.settings.tau.toFixed(2)}）`],
+    ['搾取強度 α', st.alpha.toFixed(2)],
+    ['NE相手の期待値', `${f2(st.risk)} チップ/ハンド`]
+  ].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
+  $('#xFeat').innerHTML = `<tr><th>特徴量</th><th>あなた</th>${XTYPES.map(t => `<th>${t.replace('OverFold', 'OF').replace('ToughCaller', 'TC').replace('VPIP90', 'VP90')}</th>`).join('')}</tr>` +
+    XFEAT_NAMES.map((name, f) => {
+      const [k, n] = st.kn ? st.kn[f] : [0, 0];
+      return `<tr><td>${name}</td><td>${n ? `${(k/n).toFixed(2)} <span class="s">(${k}/${n})</span>` : '—'}</td>${X.rates.map(r => `<td class="s">${r[f].toFixed(2)}</td>`).join('')}</tr>`;
+    }).join('');
+}
+$('#xTau').addEventListener('input', e => { X.settings.tau = +e.target.value; $('#xTauV').textContent = X.settings.tau.toFixed(2); });
+$('#xTau').addEventListener('change', () => { saveExploit(); updateExploit(); renderExploit(); });
+$('#xReject').addEventListener('change', e => { X.settings.reject = e.target.value; saveExploit(); updateExploit(); renderExploit(); });
+$('#xWindow').addEventListener('change', e => { X.settings.window = +e.target.value; saveExploit(); updateExploit(); renderExploit(); });
+$('#xReset').addEventListener('click', () => {
+  if (!confirm('安全搾取ボットが集めたあなたの観測データを消去しますか？')) return;
+  X.obs = []; saveExploit(); updateExploit(); renderExploit(); renderBots();
+});
+
+/* ---------- boot ---------- */
+(function boot(){
+  const saved = store.get('leduc-bots-v1');
+  if (saved && Array.isArray(saved.bots)){
+    for (const b of saved.bots.slice(0, MAX_BOTS)){
+      try{ const map = parsePolicy(b.src); bots.push({id:b.id, name:b.name, src:b.src, map, cov:coverage(map)}); }catch(e){}
+    }
+    if (saved.current && (saved.current === 'exploit' || bots.some(b => b.id === saved.current))) currentId = saved.current;
+  } else {
+    const legacy = store.get('leduc-policy-v1');
+    if (typeof legacy === 'string'){
+      try{
+        const map = parsePolicy(legacy);
+        bots.push({id:'b-legacy', name:'自分の戦略', src:legacy, map, cov:coverage(map)});
+        if (stats.custom){ stats['b-legacy'] = stats.custom; delete stats.custom; saveStats(); }
+        saveBots();
+      }catch(e){}
+    }
+  }
+})();
+showTab('opp');
+renderBots();
+renderStats();
+render();
+renderExploit();
+setTimeout(trainChunk, 50);
+})();
+</script>
+</body>
+</html>
