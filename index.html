@@ -96,7 +96,7 @@ button,input,textarea{font:inherit;color:inherit}
   .side{position:sticky;top:calc(14px + env(safe-area-inset-top,0px));height:calc(100dvh - 92px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:460px}
 }
 .tabs{display:flex;flex:none;border-bottom:1px solid var(--line)}
-.tab{flex:1;border:0;background:none;padding:12px 4px 10px;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+.tab{flex:1;border:0;background:none;padding:12px 2px 10px;font-size:13.5px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
 .tab:hover{color:var(--ink)}
 .tab[aria-selected="true"]{color:var(--ink);font-weight:700;border-bottom-color:var(--brass)}
 .tab[hidden]{display:none}
@@ -166,6 +166,26 @@ table.cmp{width:100%;border-collapse:collapse;font-size:13px}
 .cmp th{font-weight:500;color:var(--muted);border-top:0}
 .cmp tr.on td{font-weight:700}
 .cmp td.s{color:var(--muted)}
+.xdetail{margin-top:10px}
+.xchart{width:100%;height:auto;display:block;margin:12px 0 2px;background:var(--bg);border-radius:12px}
+.xchart .ax{stroke:var(--muted);stroke-width:1.2}
+.xchart .arrh{fill:var(--muted)}
+.xchart .axl{font-size:11px;fill:var(--muted)}
+.xchart .q{font-size:10.5px;fill:var(--muted);opacity:.8}
+.xchart .tp circle{fill:var(--call);opacity:.75}
+.xchart .tp text{font-size:10.5px;fill:var(--ink)}
+.xchart .dot{transition:transform .7s cubic-bezier(.2,.8,.2,1)}
+.xchart .dot circle{fill:var(--brass);stroke:var(--panel);stroke-width:2.5}
+.xchart .dot text{font-size:11px;font-weight:700;fill:var(--ink)}
+.xchart .dot.idle circle{fill:none;stroke:var(--muted);stroke-dasharray:3 3}
+.xchart .dot.unk circle{fill:var(--muted)}
+.xchart .real{fill:none;stroke:var(--ink);stroke-width:1.5;stroke-dasharray:2 2}
+.xcap{margin:2px 0 0;font-size:12px}
+@media (prefers-reduced-motion:reduce){.xchart .dot{transition:none}}
+.xdetail > summary{cursor:pointer;color:var(--muted);font-size:13px;margin-bottom:4px}
+body:not(.festival) .xdetail > summary{display:none}
+body.festival .xrow{grid-template-columns:128px 1fr 42px;font-size:14px}
+body.festival .xstatus{font-size:15px}
 .field select{border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:6px 8px;color:var(--ink);font-size:13px;max-width:100%}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 @media (max-width:420px){.two{grid-template-columns:1fr}}
@@ -188,6 +208,47 @@ table.cmp{width:100%;border-collapse:collapse;font-size:13px}
 .xgrid b{font-size:13px;font-weight:500}
 .cmp .s{color:var(--muted)}
 input[type=range]{width:100%;accent-color:var(--brass)}
+.hint{min-height:1.9em;font-size:14px;padding:3px 14px;border-radius:999px;background:rgba(201,162,39,.2);color:var(--table-ink);text-align:center}
+.hint:empty{visibility:hidden}
+body.festival .research-only{display:none !important}
+body:not(.festival) .festival-only{display:none !important}
+.fest-top{flex:none;padding:14px 16px 10px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--line)}
+.rank li .op{grid-column:2 / 4;font-size:11px;color:var(--muted);margin-top:-6px}
+.fest-side{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;gap:12px}
+@media (min-width:901px){
+  .fest-side{position:sticky;top:calc(14px + env(safe-area-inset-top,0px));height:calc(100dvh - 92px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:460px}
+}
+.fest-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.fest-head > div{display:flex;flex-direction:column;min-width:0}
+.fest-head b{font-size:20px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fest-score{text-align:right}
+.fest-score b{font-family:Spectral,Georgia,serif;font-size:34px;line-height:1.1}
+.fest-prog{font-size:14px;color:var(--muted)}
+.fest-side h2{font-size:17px;margin:4px 0 0}
+.rank{list-style:none;margin:0;padding:0}
+.rank li{display:grid;grid-template-columns:32px 1fr auto;gap:8px;align-items:center;padding:8px 6px;border-top:1px solid var(--line);font-size:15px}
+.rank li:first-child{border-top:0}
+.rank li .no{font-family:Spectral,Georgia,serif;font-weight:700;color:var(--muted);text-align:center}
+.rank li:nth-child(1) .no{color:var(--brass);font-size:18px}
+.rank li .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank li .sc{font-weight:700}
+.rank li.me{background:rgba(201,162,39,.16);border-radius:8px}
+.rank .empty{display:block;color:var(--muted);font-size:14px}
+.fest-foot{text-align:right;margin-top:12px}
+.fest-foot .lnk{color:var(--muted);font-size:12px}
+.festcfg{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.festcfg h3{font-size:15px;margin:0 0 8px}
+.overlay{position:fixed;inset:0;z-index:50;background:rgba(8,16,22,.62);display:grid;place-items:center;padding:16px}
+.overlay[hidden]{display:none}
+.modal{background:var(--panel);color:var(--ink);border-radius:18px;padding:24px;width:100%;max-width:420px;box-shadow:0 20px 50px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:10px}
+.modal h2{margin:0;font-size:22px}
+.modal p{margin:0}
+.modal .field input{font-size:18px;padding:10px 12px}
+.modal .act{margin-top:6px}
+.big-score{font-family:Spectral,Georgia,serif;font-weight:700;font-size:56px;line-height:1}
+.diag{background:var(--bg);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.diag b{font-size:20px}
+.diag p{font-size:14px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -209,6 +270,7 @@ input[type=range]{width:100%;accent-color:var(--brass)}
           <div class="board"><div id="pubCard"></div></div>
           <div class="pot">ポット<b id="pot">0</b></div>
           <div class="status" id="status" aria-live="polite"></div>
+          <div class="hint" id="handHint"></div>
         </div>
         <div class="seat">
           <div class="meta"><div class="who">あなた</div><div class="pos" id="youPos"></div><div class="stack">持ち点 <b id="youStack">100</b></div></div>
@@ -218,30 +280,46 @@ input[type=range]{width:100%;accent-color:var(--brass)}
       </div>
       <div class="actions" id="actions"></div>
       <div class="under">
-        <label><input type="checkbox" id="showProbs"> ボットの行動確率をプレイ中にも表示</label>
+        <label class="research-only"><input type="checkbox" id="showProbs"> ボットの行動確率をプレイ中にも表示</label>
         <span>キー操作: F フォールド / C チェック・コール / R ベット・レイズ / N 次のハンド</span>
       </div>
       <div id="liveProbs"></div>
     </section>
 
     <aside class="side">
+      <div class="fest-top festival-only">
+        <div class="fest-head">
+          <div><span class="note">プレイヤー</span><b id="fName">—</b></div>
+          <div class="fest-score"><span class="note">純増</span><b id="fScore">±0</b></div>
+        </div>
+        <div class="fest-prog"><span id="fProg">ハンド 0 / 12</span><div class="progress"><i id="fBar"></i></div></div>
+      </div>
       <div class="tabs" id="tabs" role="tablist" aria-label="サイドパネル">
+        <button class="tab festival-only" role="tab" data-tab="rank" id="tabbtn-rank" aria-selected="false" aria-controls="tab-rank">ランキング</button>
         <button class="tab" role="tab" data-tab="opp" id="tabbtn-opp" aria-selected="true" aria-controls="tab-opp">対戦相手</button>
         <button class="tab" role="tab" data-tab="model" id="tabbtn-model" aria-selected="false" aria-controls="exploitBlock" hidden>相手モデル</button>
         <button class="tab" role="tab" data-tab="stats" id="tabbtn-stats" aria-selected="false" aria-controls="tab-stats">成績</button>
         <button class="tab" role="tab" data-tab="log" id="tabbtn-log" aria-selected="false" aria-controls="tab-log">履歴</button>
       </div>
+      <section class="block tabpanel festival-only" role="tabpanel" data-tab="rank" id="tab-rank" aria-labelledby="tabbtn-rank" hidden>
+        <p class="note lead">今日のランキング（純増チップ）</p>
+        <ol class="rank" id="fRank"></ol>
+        <div class="fest-foot"><button class="lnk" id="toResearch">研究者モード</button></div>
+      </section>
       <section class="block tabpanel" role="tabpanel" data-tab="opp" id="tab-opp" aria-labelledby="tabbtn-opp">
+        <p class="note lead festival-only" id="oppNote">対戦するAIを選べます。</p>
         <ul class="bots" id="botList"></ul>
+        <div class="research-only">
         <div class="progress"><i id="trainBar"></i></div>
         <p class="note" id="trainMsg">学習を準備しています</p>
-        <div class="row">
+        </div>
+        <div class="row research-only">
           <button class="btn primary" id="addBot">ボットを追加</button>
           <button class="btn" id="copyCfr">CFR戦略をJSONでコピー</button>
         </div>
-        <p class="note" id="botCount"></p>
-        <p class="msg" id="panelMsg"></p>
-        <div id="editor" hidden>
+        <p class="note research-only" id="botCount"></p>
+        <p class="msg research-only" id="panelMsg"></p>
+        <div id="editor" class="research-only" hidden>
           <h3 id="editorTitle">ボットを追加</h3>
           <label class="field">名前<input type="text" id="botNameInput" maxlength="30" autocomplete="off"></label>
           <label class="field">戦略JSON（pklを選ぶと変換結果が入ります）
@@ -265,7 +343,26 @@ input[type=range]{width:100%;accent-color:var(--brass)}
           </div>
           <p class="msg" id="policyMsg"></p>
         </div>
-        <details>
+        <div class="festcfg research-only">
+          <h3>展示モード（学祭用）</h3>
+          <div class="two">
+            <label class="field">勝負の形式
+              <select id="cfgFormat"><option value="time">時間制（タイマー）</option><option value="hands">ハンド数制</option></select>
+            </label>
+            <label class="field">制限時間（時間制）
+              <select id="cfgMin"><option value="3">3分</option><option value="5">5分</option><option value="7">7分</option><option value="10">10分</option></select>
+            </label>
+            <label class="field">ハンド数（ハンド数制）
+              <select id="cfgHands"><option value="8">8</option><option value="10">10</option><option value="12">12</option><option value="16">16</option><option value="20">20</option></select>
+            </label>
+          </div>
+          <div class="row">
+            <button class="btn primary" id="toFestival">展示モードに切り替え</button>
+            <button class="btn" id="clearRank">ランキングを消去</button>
+          </div>
+          <p class="msg" id="festMsg"></p>
+        </div>
+        <details class="research-only">
           <summary>戦略JSONの形式とルール</summary>
           <p>キーは情報集合、値は行動確率です。</p>
           <pre>&lt;自分のカード&gt;&lt;公開カード&gt;:&lt;1R履歴&gt;/&lt;2R履歴&gt;</pre>
@@ -282,12 +379,17 @@ input[type=range]{width:100%;accent-color:var(--brass)}
       </section>
 
       <section class="block tabpanel" role="tabpanel" data-tab="model" id="exploitBlock" aria-labelledby="tabbtn-model" hidden>
-        <p class="note lead">安全搾取ボットから見たあなた</p>
+        <p class="note lead">AIから見たあなたのプレイスタイル</p>
         <p class="xstatus" id="xStatus"></p>
         <div id="xPost"></div>
-        <div class="xgrid" id="xMetrics"></div>
-        <div class="cmp-wrap"><table class="cmp" id="xFeat"></table></div>
-        <div class="two" style="margin-top:12px">
+        <svg class="xchart" id="xChart" viewBox="0 0 320 240" role="img" aria-label="ベット・レイズ率とコール率のマップ上のあなたの位置"></svg>
+        <p class="note xcap">● あなたの位置（AIの推定）<span class="research-only">　◌ 実際の打ち方</span></p>
+        <details class="xdetail" id="xDetail" open>
+          <summary>くわしいデータを見る</summary>
+          <div class="xgrid" id="xMetrics"></div>
+          <div class="cmp-wrap"><table class="cmp" id="xFeat"></table></div>
+        </details>
+        <div class="two research-only" style="margin-top:12px">
           <label class="field">安全性 τ: <span id="xTauV"></span> チップ/ハンド
             <input type="range" id="xTau" min="0" max="0.5" step="0.05">
           </label>
@@ -295,11 +397,11 @@ input[type=range]{width:100%;accent-color:var(--brass)}
             <select id="xReject"><option value="distance">距離ベース</option><option value="entropy">エントロピー</option><option value="both">両方</option><option value="none">しない</option></select>
           </label>
         </div>
-        <label class="field">観測窓
+        <label class="field research-only">観測窓
           <select id="xWindow"><option value="0">全ハンド</option><option value="50">直近50ハンド</option><option value="100">直近100ハンド</option><option value="200">直近200ハンド</option></select>
         </label>
-        <div class="row"><button class="btn" id="xReset">観測をリセット</button></div>
-        <details>
+        <div class="row research-only"><button class="btn" id="xReset">観測をリセット</button></div>
+        <details class="research-only">
           <summary>このボットの仕組み</summary>
           <p>内間・石川「Leduc Pokerにおける相手タイプ推定に基づく安全な搾取戦略の評価」の手法を、このアプリのルール（ブラインド1/2）に合わせて実装しています。</p>
           <p>相手タイプはNE、OverFold90、VPIP90、ToughCallerの4つです。上の表の4つの特徴量を、タイプごとにBeta-Binomialでモデル化し、ベイズ則で事後確率 w を求めます。搾取成分は各タイプへの最適反応を w で混ぜたもので、実際の方策は π = (1−α)π<sub>NE</sub> + απ<sub>exploit</sub>、α = min(conf, α<sub>cap</sub>) です。</p>
@@ -314,7 +416,7 @@ input[type=range]{width:100%;accent-color:var(--brass)}
           <div><b id="stMean">—</b><span>1ハンド平均 ±95%</span></div>
         </div>
         <svg class="spark" id="spark" viewBox="0 0 300 70" preserveAspectRatio="none" aria-label="累積収支の推移"></svg>
-        <div class="row"><button class="btn" id="resetStats">この相手の成績をリセット</button></div>
+        <div class="row research-only"><button class="btn" id="resetStats">この相手の成績をリセット</button></div>
         <div class="cmp-wrap"><table class="cmp" id="cmp"></table></div>
       </section>
 
@@ -324,6 +426,31 @@ input[type=range]{width:100%;accent-color:var(--brass)}
       </section>
     </aside>
   </main>
+
+  <div class="overlay" id="startModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+      <h2 id="mTitle">AIとポーカーで勝負！</h2>
+      <p>AIと <b id="mHands">5分間</b> 対戦して、チップをどれだけ増やせるか（純増）を競います。</p>
+      <label class="field">ニックネーム<input type="text" id="mName" maxlength="12" placeholder="ゲスト" autocomplete="off"></label>
+      <label class="field">対戦するAI<select id="mBot"></select></label>
+      <button class="act n" id="mStart">スタート</button>
+      <p class="note" id="mWait"></p>
+    </div>
+  </div>
+  <div class="overlay" id="resultModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rName">
+      <p class="note">結果</p>
+      <h2 id="rName"></h2>
+      <div class="big-score" id="rScore"></div>
+      <p id="rRank"></p>
+      <div class="diag">
+        <span class="note">AIによるプレイスタイル診断</span>
+        <b id="rType"></b>
+        <p id="rDesc"></p>
+      </div>
+      <button class="act n" id="rNext">次の人へ</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -467,9 +594,11 @@ function trainChunk(){
     $('#trainMsg').textContent = `学習済み: CFR+ ${TRAIN_ITERS} 反復、情報集合 ${KEY_ACTS.size} 個`;
     exploitInit();
     loadExploit();
+    if (FEST.mode === 'festival') X.obs = [];   // each visitor starts with a fresh model
     updateExploit();
     renderExploit();
     renderBots();
+    festRender();
     if (!G.started && (currentId === 'cfr' || currentId === 'exploit')) startHand();
   }
 }
@@ -1085,14 +1214,14 @@ function makeTypeTable(name){
 
 /* expected feature rates of a type playing against NE (both seats) — same definitions as live recording */
 function expectedFeatures(typeGet){
-  const acc = [[0,0],[0,0],[0,0],[0,0]];   // [successes, trials] for F, V, N, R
+  const acc = [[0,0],[0,0],[0,0],[0,0],[0,0]];   // [successes, trials] for F, V, N, R, and call-when-facing (chart only)
   for (const j of [0, 1]){
     const walk = (d, r, h0, h1, c0, c1, nr, reach, had, vp) => {
       const cur = r === 0 ? h0 : h1, p = actorOf(cur, r), acts = legalActions(cur, nr, r), key = infoKey(d[p], d[2], r, h0, h1);
       const s = p === j ? typeGet(key) : X.ne.get(key), facing = acts.includes('f');
       if (p === j){
         acc[3][1] += reach; acc[3][0] += reach * s[2];
-        if (facing){ acc[0][1] += reach; acc[0][0] += reach * s[0]; if (r === 1){ acc[2][1] += reach; acc[2][0] += reach * (1 - s[0]); } }
+        if (facing){ acc[4][1] += reach; acc[4][0] += reach * s[1]; acc[0][1] += reach; acc[0][0] += reach * s[0]; if (r === 1){ acc[2][1] += reach; acc[2][0] += reach * (1 - s[0]); } }
       }
       for (const a of acts){
         const pa = s[AIDX[a]]; if (!pa) continue;
@@ -1148,14 +1277,15 @@ function calibrate(kn){
   return {thConf: confs[Math.floor(0.05 * confs.length)], thD: ds[Math.ceil(0.95 * ds.length) - 1]};
 }
 function obsCounts(){
-  const w = X.settings.window, recs = w > 0 ? X.obs.slice(-w) : X.obs, c = [0,0,0,0,0,0,0,0];
-  for (const r of recs) for (let i = 0; i < 8; i++) c[i] += r[i];
+  // c[8] = calls when facing a bet, c[9] = facing trials from records that track calls
+  const w = X.settings.window, recs = w > 0 ? X.obs.slice(-w) : X.obs, c = [0,0,0,0,0,0,0,0,0,0];
+  for (const r of recs){ for (let i = 0; i < 8; i++) c[i] += r[i]; if (r.length >= 9){ c[8] += r[8]; c[9] += r[0]; } }
   return {c, n: recs.length};
 }
 function updateExploit(){
   if (!X.ready) return;
   const {c, n} = obsCounts(), kn = featKN(c);
-  const st = {n, kn, w: XTYPES.map(() => 1 / XTYPES.length), conf: 0, minD: 0, dist: null, thConf: null, thD: null,
+  const st = {n, kn, c, w: XTYPES.map(() => 1 / XTYPES.length), conf: 0, minD: 0, dist: null, thConf: null, thD: null,
     rejEntropy: false, rejDist: false, unknown: false, alphaCap: 0, alpha: 0, risk: 0, mix: null, map: -1};
   if (n && kn.some(([, t]) => t > 0)){
     Object.assign(st, posteriorOf(kn), calibrate(kn));
@@ -1204,6 +1334,8 @@ function resetMatch(){ M.you = START_STACK; M.bot = START_STACK; M.over = false;
 
 function startHand(){
   if (!ready()) return;
+  if (FEST.mode === 'festival' && (!FEST.active || FEST.over)) return;
+  if (FEST.mode === 'festival' && FEST.format === 'time' && Date.now() >= FEST.endAt){ festTick(); return; }
   clearTimeout(G.botTimer);
   if (M.over) resetMatch();
   const deck = [0,1,2,3,4,5];
@@ -1216,7 +1348,7 @@ function startHand(){
   G.c = [Math.min(BLINDS[0], stackOf(0)), Math.min(BLINDS[1], stackOf(1))];
   G.over = false; G.result = null; G.actions = []; G.decisions = []; G.reveal = false; G.pubShown = false;
   G.flipYou = true; G.flipPub = false;
-  G.obs = [0,0,0,0,0,0,0,0]; G.obsHad = false; G.obsVp = false;
+  G.obs = [0,0,0,0,0,0,0,0,0]; G.obsHad = false; G.obsVp = false;
   if (bettingClosed()){ runout(); return; }
   render();
   maybeBot();
@@ -1247,10 +1379,10 @@ function apply(a, seat){
   const before = G.c[seat];
   const entry = {r:G.r, seat, a, name:actionName(a, G.c[other] > G.c[seat], G.r)};
   G.actions.push(entry);
-  if (seat === G.humanSeat && currentId === 'exploit'){   // features of the human for opponent modelling
+  if (seat === G.humanSeat && (currentId === 'exploit' || FEST.mode === 'festival')){   // features of the human for opponent modelling
     const facing = G.c[other] > G.c[seat], o = G.obs;
     o[6]++; if (a === 'r') o[7]++;
-    if (facing){ o[0]++; if (a === 'f') o[1]++; if (G.r === 1){ o[4]++; if (a !== 'f') o[5]++; } }
+    if (facing){ o[0]++; if (a === 'f') o[1]++; if (a === 'c') o[8]++; if (G.r === 1){ o[4]++; if (a !== 'f') o[5]++; } }
     if (G.r === 0){ G.obsHad = true; if (a === 'r' || (a === 'c' && facing)) G.obsVp = true; }
   }
   if (a === 'f'){ finish({type:'fold', loser:seat}); return; }
@@ -1305,6 +1437,7 @@ function finish(res){
   let delta;
   if (res.type === 'fold'){
     delta = res.loser === hs ? -amt : amt;
+    if (FEST.mode === 'festival') G.reveal = true;   // show the bot's card so beginners can see what happened
   } else {
     G.reveal = true; G.pubShown = true;
     const w = showdown(rankOf(G.cards[0]), rankOf(G.cards[1]), rankOf(G.pub));
@@ -1316,7 +1449,7 @@ function finish(res){
   M.you += delta; M.bot -= delta;
   if (M.you <= 0 || M.bot <= 0){ M.over = true; M.winner = M.you > 0 ? 'you' : 'bot'; }
   recordStats(delta, M.over ? M.winner : null);
-  if (currentId === 'exploit' && X.ready){
+  if ((currentId === 'exploit' || FEST.mode === 'festival') && X.ready){
     G.obs[2] = G.obsHad ? 1 : 0; G.obs[3] = G.obsVp ? 1 : 0;
     X.obs.push(G.obs);
     if (X.obs.length > 3000) X.obs.shift();
@@ -1325,18 +1458,21 @@ function finish(res){
     renderExploit();
     renderBots();
   }
+  if (FEST.mode === 'festival') festAfterHand();
   addLog();
   render();
 }
 
 /* ---------- stats ---------- */
+let statsMode = 'research';   // festival results are kept apart from research results
+const statsKey = () => statsMode === 'festival' ? 'leduc-fest-stats-v1' : 'leduc-stats-v3';
 let stats = store.get('leduc-stats-v3') || {};   // v3: blinds 1/2, 100-point matches
 function statsFor(id){
   if (!stats[id]) stats[id] = {hands:0, net:0, sumSq:0, series:[]};
   return stats[id];
 }
 const curStats = () => statsFor(currentId);
-const saveStats = () => store.set('leduc-stats-v3', stats);
+const saveStats = () => store.set(statsKey(), stats);
 function meanText(s){
   if (!s.hands) return '—';
   const m = s.net / s.hands;
@@ -1401,6 +1537,7 @@ function probBar(s, acts){
 }
 
 function render(){
+  $('#handHint').textContent = FEST.mode === 'festival' ? handHint() : '';
   const hs = G.humanSeat, bs = botSeat();
   $('#botName').textContent = botLabel(currentId);
   if (!G.started){
@@ -1430,7 +1567,7 @@ function render(){
     const d = G.result.delta;
     const tail = d > 0 ? `あなたの勝ち +${d}` : d < 0 ? `あなたの負け ${d}` : '引き分け';
     if (G.result.type === 'fold'){
-      st = (G.result.loser === hs ? 'あなたがフォールド。' : 'ボットがフォールド。') + tail;
+      st = (G.result.loser === hs ? 'あなたがフォールド。' : 'ボットがフォールド。') + tail + (FEST.mode === 'festival' ? `（ボットの手札は ${RANKS[rankOf(G.cards[bs])]}）` : '');
     } else {
       const pr = rankOf(G.pub);
       const desc = id => RANKS[rankOf(id)] + (rankOf(id) === pr ? 'のペア' : '');
@@ -1442,6 +1579,7 @@ function render(){
     const prefix = last && last.seat === bs ? `ボットは${last.name}。` : '';
     st = toAct() === hs ? prefix + 'あなたの番です' : 'ボットが考えています…';
   }
+  if (FEST.mode === 'festival' && FEST.timeUp && G.started && !G.over) st = '時間切れ！このハンドで最後です。' + st;
   $('#status').textContent = st;
   renderActions();
   renderLive();
@@ -1452,6 +1590,13 @@ function renderActions(){
   el.className = 'actions';
   if (!ready()){
     el.innerHTML = '<p class="wait">学習が終わると対戦できます</p>';
+    return;
+  }
+  if (FEST.mode === 'festival' && (!FEST.active || FEST.over)){
+    el.className = 'actions single';
+    el.innerHTML = FEST.over
+      ? '<button class="act n" data-a="result">結果を見る<small>N</small></button>'
+      : '<button class="act n" data-a="start">ニックネームを入れてスタート</button>';
     return;
   }
   if (!G.started || G.over){
@@ -1509,12 +1654,19 @@ function addLog(){
 $('#actions').addEventListener('click', e => {
   const b = e.target.closest('button[data-a]');
   if (!b || b.disabled) return;
-  if (b.dataset.a === 'n') startHand(); else humanAct(b.dataset.a);
+  if (b.dataset.a === 'n') startHand();
+  else if (b.dataset.a === 'result') showResult();
+  else if (b.dataset.a === 'start') openStart();
+  else humanAct(b.dataset.a);
 });
 document.addEventListener('keydown', e => {
   if (e.target.matches('textarea, input[type="text"]') || e.metaKey || e.ctrlKey || e.altKey) return;
   const k = e.key.toLowerCase();
-  if (k === 'n'){ if (ready() && (G.over || !G.started)) startHand(); }
+  if (!$('#startModal').hidden || !$('#resultModal').hidden) return;
+  if (k === 'n'){
+    if (FEST.mode === 'festival' && FEST.over) showResult();
+    else if (ready() && (G.over || !G.started)) startHand();
+  }
   else if (k === 'f' || k === 'c' || k === 'r') humanAct(k);
 });
 $('#showProbs').addEventListener('change', renderLive);
@@ -1526,9 +1678,9 @@ function renderBots(){
     {id:'exploit', name:'安全搾取ボット（相手タイプ推定）', note: X.ready ? `あなたの観測 ${X.obs.length} ハンド` : '準備中…', full:false, custom:false},
     ...bots.map(b => ({id:b.id, name:b.name, note:`${b.cov.hit} / ${b.cov.total} 情報集合`, full:b.cov.hit === b.cov.total, custom:true}))];
   $('#botList').innerHTML = items.map(it => `<li class="${it.id === currentId ? 'on' : ''}">
-      <label><input type="radio" name="bot" value="${it.id}" ${it.id === currentId ? 'checked' : ''}>
+      <label><input type="radio" name="bot" value="${it.id}" ${it.id === currentId ? 'checked' : ''} ${FEST.mode === 'festival' && FEST.active ? 'disabled' : ''}>
         <span><b>${esc(it.name)}</b><small class="${it.full ? 'full' : ''}">${it.note}</small></span></label>
-      ${it.custom ? `<button class="lnk" data-edit="${it.id}">編集</button><button class="lnk del" data-del="${it.id}">削除</button>` : ''}
+      ${it.custom ? `<button class="lnk research-only" data-edit="${it.id}">編集</button><button class="lnk del research-only" data-del="${it.id}">削除</button>` : ''}
     </li>`).join('');
   $('#addBot').disabled = bots.length >= MAX_BOTS;
   $('#botCount').textContent = `自作ボット ${bots.length} / ${MAX_BOTS} 体`;
@@ -1544,7 +1696,15 @@ function selectBot(id){
 }
 
 $('#botList').addEventListener('change', e => {
-  if (e.target.name === 'bot') selectBot(e.target.value);
+  if (e.target.name !== 'bot') return;
+  if (FEST.mode === 'festival'){
+    if (FEST.active){ renderBots(); return; }
+    FEST.bot = e.target.value; saveFest();
+    currentId = FEST.bot;
+    renderBots(); renderStats(); renderExploit(); render(); festRender();
+    return;
+  }
+  selectBot(e.target.value);
 });
 $('#botList').addEventListener('click', e => {
   const ed = e.target.closest('[data-edit]'), del = e.target.closest('[data-del]');
@@ -1698,7 +1858,7 @@ function showTab(id){
 $('#tabs').addEventListener('click', e => { const b = e.target.closest('.tab'); if (b) showTab(b.dataset.tab); });
 $('#tabs').addEventListener('keydown', e => {
   if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-  const tabs = [...document.querySelectorAll('#tabs .tab')].filter(b => !b.hidden);
+  const tabs = [...document.querySelectorAll('#tabs .tab')].filter(b => !b.hidden && b.offsetParent !== null);
   const i = tabs.findIndex(b => b.dataset.tab === activeTab);
   const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
   showTab(next.dataset.tab); next.focus(); e.preventDefault();
@@ -1707,14 +1867,14 @@ $('#tabs').addEventListener('keydown', e => {
 /* ---------- safe exploit: storage & panel ---------- */
 function loadExploit(){
   const v = store.get('leduc-exploit-v1');
-  if (v && Array.isArray(v.obs)) X.obs = v.obs.filter(r => Array.isArray(r) && r.length === 8);
+  if (v && Array.isArray(v.obs)) X.obs = v.obs.filter(r => Array.isArray(r) && r.length >= 8);
   if (v && v.settings) Object.assign(X.settings, v.settings);
 }
-function saveExploit(){ store.set('leduc-exploit-v1', {obs: X.obs, settings: X.settings}); }
+function saveExploit(){ if (FEST.mode === 'festival') return; store.set('leduc-exploit-v1', {obs: X.obs, settings: X.settings}); }
 const f2 = x => (x >= 0 ? '+' : '') + x.toFixed(2);
 function renderExploit(){
   const tabBtn = $('#tabbtn-model');
-  tabBtn.hidden = currentId !== 'exploit';
+  tabBtn.hidden = !(currentId === 'exploit' || FEST.mode === 'festival');
   if (tabBtn.hidden){ if (activeTab === 'model') showTab('opp'); return; }
   $('#xTau').value = X.settings.tau; $('#xTauV').textContent = X.settings.tau.toFixed(2);
   $('#xReject').value = X.settings.reject; $('#xWindow').value = String(X.settings.window);
@@ -1725,16 +1885,22 @@ function renderExploit(){
     return;
   }
   let status;
-  if (!st.n) status = 'まだ観測がありません。最初はNE方策で対戦します。';
+  if (currentId !== 'exploit'){
+    status = !st.n ? 'まだ観測がありません。対戦するとAIがあなたのタイプを推定します。'
+      : st.unknown ? '既知の4タイプのどれにも当てはまらない打ち方です。'
+      : `あなたは ${XTYPES[st.map]} に近いと推定しています。（この対戦相手は推定を戦い方に使いません）`;
+  } else if (!st.n) status = 'まだ観測がありません。最初はNE方策で対戦します。';
   else if (st.unknown){
     const why = [st.rejDist && (X.settings.reject !== 'entropy') ? '距離が閾値を超えた' : '', st.rejEntropy && (X.settings.reject !== 'distance') ? '確信度が閾値未満' : ''].filter(Boolean).join('、');
     status = `既知の4タイプに当てはまらないと判定しました（${why}）。誤った搾取を避けるため、NE方策で対戦しています。`;
   } else if (st.alpha <= 0) status = `いちばん近いのは ${XTYPES[st.map]} ですが、搾取強度は0です。NE方策で対戦しています。`;
   else status = `あなたを ${XTYPES[st.map]} に近いと推定し、搾取強度 α = ${st.alpha.toFixed(2)} で対戦しています。`;
+  if (FEST.mode === 'festival') status = friendlyStatus(st);
   $('#xStatus').textContent = status;
   $('#xStatus').className = 'xstatus' + (st.unknown ? ' unk' : '');
   $('#xPost').innerHTML = XTYPES.map((t, i) => `<div class="xrow ${i === st.map && !st.unknown && st.n ? 'on' : ''}">
-      <span>${t}</span><div class="xbar"><i style="width:${(st.w[i]*100).toFixed(1)}%"></i></div><b>${(st.w[i]*100).toFixed(0)}%</b></div>`).join('');
+      <span>${FEST.mode === 'festival' ? STYLE[i][0] : t}</span><div class="xbar"><i style="width:${(st.w[i]*100).toFixed(1)}%"></i></div><b>${(st.w[i]*100).toFixed(0)}%</b></div>`).join('');
+  renderChart(st);
   const th = v => v === null ? '—' : v.toFixed(2);
   const rj = X.settings.reject;
   $('#xMetrics').innerHTML = [
@@ -1760,6 +1926,271 @@ $('#xReset').addEventListener('click', () => {
   X.obs = []; saveExploit(); updateExploit(); renderExploit(); renderBots();
 });
 
+/* ---------- festival (exhibition) mode ---------- */
+const FEST = Object.assign({mode:'festival', hands:12, bot:'exploit'}, store.get('leduc-fest-v1') || {},
+  {name:'', played:0, active:false, over:false, entryTs:0, researchId:'cfr', endAt:0, timeUp:false, timer:null});
+if (FEST.format !== 'hands') FEST.format = 'time';
+if (![3, 5, 7, 10].includes(FEST.minutes)) FEST.minutes = 5;
+const saveFest = () => store.set('leduc-fest-v1', {mode: FEST.mode, hands: FEST.hands, bot: FEST.bot, format: FEST.format, minutes: FEST.minutes});
+const mmss = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+/* timer mode: when time runs out the hand in progress is played to the end, then the game stops */
+function festTick(){
+  if (!FEST.active || FEST.format !== 'time') return;
+  if (!FEST.timeUp && Date.now() >= FEST.endAt){
+    FEST.timeUp = true;
+    if (!G.started || G.over){ festEndGame(); return; }
+    render();
+  }
+  festRender();
+}
+function festEndGame(){
+  clearInterval(FEST.timer);
+  FEST.active = false; FEST.over = true;
+  FEST.entryTs = Date.now();
+  const rank = loadRank();
+  rank.push({name: FEST.name, score: M.you - START_STACK, hands: FEST.played, opp: botLabel(currentId), day: today(), ts: FEST.entryTs});
+  store.set('leduc-fest-rank-v1', rank.slice(-2000));
+  renderBots(); render(); festRender();
+  setTimeout(() => { if (FEST.over && $('#resultModal').hidden) showResult(); }, G.started && G.over ? 1800 : 300);
+}
+const today = () => new Date().toLocaleDateString('ja-JP');
+const loadRank = () => { const r = store.get('leduc-fest-rank-v1'); return Array.isArray(r) ? r : []; };
+const fmtScore = n => n > 0 ? '+' + n : n < 0 ? String(n) : '±0';
+const STYLE = [
+  ['バランス型', 'ベット・コール・フォールドの偏りが少なく、AIにとって読みにくい打ち方です。'],
+  ['慎重型', '相手が賭けてくると降りることが多いタイプ。強気に攻められると押し切られやすいかも。'],
+  ['積極参加型', '弱いカードでも勝負に参加しがちなタイプ。参加するカードを絞るともっと強くなります。'],
+  ['粘り強いコール型', 'なかなか降りないタイプ。ブラフは効きにくい反面、強いカードで攻められると苦しくなります。']
+];
+
+/* style map: bet/raise rate (x) vs call rate when facing a bet (y), centred on the NE type */
+let chartKey = '';
+function renderChart(st){
+  const svg = $('#xChart');
+  if (!svg || !X.ready) return;
+  const fest = FEST.mode === 'festival';
+  const pts = X.rates.map(r => [r[3], r[4]]);
+  const [cx, cy] = pts[0];
+  const sx = Math.max(0.15, ...pts.map(p => Math.abs(p[0] - cx))) * 1.25;
+  const sy = Math.max(0.15, ...pts.map(p => Math.abs(p[1] - cy))) * 1.25;
+  const W = 320, H = 240, CX = W / 2, CY = H / 2, RX = 140, RY = 100;
+  const px = v => CX + Math.max(-1, Math.min(1, (v - cx) / sx)) * RX;
+  const py = v => CY - Math.max(-1, Math.min(1, (v - cy) / sy)) * RY;
+  const key = fest ? 'festival' : 'research';
+  if (chartKey !== key){
+    chartKey = key;
+    const names = fest ? STYLE.map(s => s[0]) : XTYPES;
+    svg.innerHTML = `
+      <defs><marker id="xArr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrh"/></marker></defs>
+      <text class="q" x="${W - 12}" y="20" text-anchor="end">攻めて粘る</text>
+      <text class="q" x="12" y="20">受け身で粘る</text>
+      <text class="q" x="${W - 12}" y="${H - 10}" text-anchor="end">攻めるが降りやすい</text>
+      <text class="q" x="12" y="${H - 10}">慎重・降りやすい</text>
+      <line class="ax" x1="8" y1="${CY}" x2="${W - 8}" y2="${CY}" marker-end="url(#xArr)"/>
+      <line class="ax" x1="${CX}" y1="${H - 4}" x2="${CX}" y2="6" marker-end="url(#xArr)"/>
+      <text class="axl" x="${W - 10}" y="${CY + 16}" text-anchor="end">ベット・レイズ率</text>
+      <text class="axl" x="${CX + 7}" y="14">コール率</text>
+      ${typeLabels(pts.map(p => [px(p[0]), py(p[1])]), names, W, H)}
+      <circle id="xReal" class="real" r="6" cx="${CX}" cy="${CY}" style="display:none"/>
+      <g id="xDot" class="dot idle" style="transform:translate(${CX}px,${CY}px)"><circle r="9"/><text y="-14" text-anchor="middle">あなた</text></g>`;
+  }
+  let x = CX, y = CY, cls = 'dot idle';
+  if (st && st.n){
+    // the dot follows the type estimate: posterior-weighted position of the four types
+    x = px(st.w.reduce((s, w, i) => s + w * pts[i][0], 0));
+    y = py(st.w.reduce((s, w, i) => s + w * pts[i][1], 0));
+    cls = st.unknown ? 'dot unk' : 'dot';
+  }
+  const dot = $('#xDot');
+  dot.setAttribute('class', cls);
+  dot.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+  const real = $('#xReal'), c = st && st.c;
+  if (!fest && c && c[6] > 0 && c[9] > 0){
+    real.style.display = '';
+    real.setAttribute('cx', px(c[7] / c[6]).toFixed(1));
+    real.setAttribute('cy', py(c[8] / c[9]).toFixed(1));
+  } else real.style.display = 'none';
+}
+/* place each type label below, above, right or left of its point, avoiding the others */
+function typeLabels(xy, names, W, H){
+  const boxes = [{x0: W - 100, x1: W - 6, y0: H / 2 + 5, y1: H / 2 + 19}];   // keep clear of the x-axis caption
+  const hit = b => b.x0 < 4 || b.x1 > W - 4 || b.y0 < 26 || b.y1 > H - 18 || boxes.some(o => b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0);
+  return xy.map(([x, y], i) => {
+    const w = names[i].length * 10.5, h = 12;
+    const cands = [
+      {tx: x, ty: y + 16, a: 'middle', x0: x - w/2, x1: x + w/2, y0: y + 5, y1: y + 17},
+      {tx: x, ty: y - 8, a: 'middle', x0: x - w/2, x1: x + w/2, y0: y - 19, y1: y - 7},
+      {tx: x + 8, ty: y + 4, a: 'start', x0: x + 7, x1: x + 8 + w, y0: y - 7, y1: y + 5},
+      {tx: x - 8, ty: y + 4, a: 'end', x0: x - 8 - w, x1: x - 7, y0: y - 7, y1: y + 5},
+      {tx: x + 6, ty: y + 30, a: 'start', x0: x + 5, x1: x + 6 + w, y0: y + 19, y1: y + 31},
+      {tx: x + 6, ty: y - 22, a: 'start', x0: x + 5, x1: x + 6 + w, y0: y - 33, y1: y - 21}
+    ];
+    const c = cands.find(b => !hit(b)) || cands[0];
+    boxes.push(c, {x0: x - 5, x1: x + 5, y0: y - 5, y1: y + 5});
+    return `<g class="tp"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4"/><text x="${c.tx.toFixed(1)}" y="${c.ty.toFixed(1)}" text-anchor="${c.a}">${names[i]}</text></g>`;
+  }).join('');
+}
+function friendlyStatus(st){
+  if (!st || !st.n) return '対戦すると、AIがあなたのプレイスタイルを分析します。';
+  if (st.unknown) return 'AIの知っているどのタイプにも当てはまらない、読みにくい打ち方です。';
+  const sure = st.conf < 0.3 ? 'まだ自信は低め' : st.conf < 0.6 ? 'そこそこ自信あり' : 'かなり自信あり';
+  let t = `AIはあなたを「${STYLE[st.map][0]}」に近いと見ています（${sure}）。`;
+  if (currentId === 'exploit' && st.alpha > 0)
+    t += st.alpha < 0.3 ? 'その弱点を少しだけ突いてきます。' : st.alpha < 0.6 ? 'その弱点を突く戦い方に切り替えています。' : 'その弱点を本気で突いてきます！';
+  return t;
+}
+function handHint(){
+  if (!G.started) return '';
+  const me = rankOf(G.cards[G.humanSeat]), R = RANKS[me];
+  if (!G.pubShown) return ['あなたの J は、いちばん弱いカード', 'あなたの Q は、まん中の強さ', 'あなたの K は、いちばん強いカード'][me];
+  const pub = rankOf(G.pub);
+  if (me === pub) return `${R}のペア！ いちばん強い役です`;
+  if (me === 2) return 'ペアなし・Kハイ。相手がペアでなければ負けません';
+  if (me === 1) return 'ペアなし・Qハイ。相手がJなら勝ち、Kなら負け';
+  return 'ペアなし・Jハイ。かなり弱い手です';
+}
+
+function festRender(){
+  $('#fName').textContent = FEST.active || FEST.over ? FEST.name : '—';
+  const score = M.you - START_STACK;
+  const fs = $('#fScore');
+  fs.textContent = fmtScore(FEST.active || FEST.over ? score : 0);
+  fs.className = score > 0 && (FEST.active || FEST.over) ? 'pos-v' : score < 0 && (FEST.active || FEST.over) ? 'neg-v' : '';
+  if (FEST.format === 'time'){
+    const total = FEST.minutes * 60000;
+    const left = FEST.active ? Math.max(0, FEST.endAt - Date.now()) : FEST.over ? 0 : total;
+    $('#fProg').textContent = FEST.timeUp && FEST.active ? `時間切れ（このハンドで終了）・${FEST.played} ハンド終了`
+      : `残り ${mmss(left)}・${FEST.played} ハンド終了`;
+    $('#fBar').style.width = (100 * left / total) + '%';
+    $('#mHands').textContent = `${FEST.minutes}分間`;
+  } else {
+    $('#fProg').textContent = `ハンド ${FEST.played} / ${FEST.hands}`;
+    $('#fBar').style.width = (100 * FEST.played / FEST.hands) + '%';
+    $('#mHands').textContent = `${FEST.hands}ハンド`;
+  }
+  $('#mStart').disabled = !ready();
+  $('#mWait').textContent = ready() ? '' : 'AIを準備しています…（数秒）';
+  const list = loadRank().filter(r => r.day === today()).sort((a, b) => b.score - a.score || a.ts - b.ts);
+  const myIdx = list.findIndex(r => r.ts === FEST.entryTs);
+  let html = list.slice(0, 10).map((r, i) => `<li class="${r.ts === FEST.entryTs ? 'me' : ''}"><span class="no">${i + 1}</span><span class="nm">${esc(r.name)}</span><span class="sc ${r.score > 0 ? 'pos-v' : r.score < 0 ? 'neg-v' : ''}">${fmtScore(r.score)}</span>${r.opp ? `<span class="op">対 ${esc(r.opp)}</span>` : ''}</li>`).join('');
+  if (myIdx >= 10) html += `<li class="me"><span class="no">${myIdx + 1}</span><span class="nm">${esc(list[myIdx].name)}</span><span class="sc">${fmtScore(list[myIdx].score)}</span></li>`;
+  $('#fRank').innerHTML = html || '<li class="empty">まだ記録がありません。最初の挑戦者になろう！</li>';
+}
+
+function openStart(){
+  if (FEST.mode !== 'festival') return;
+  $('#mName').value = '';
+  const opts = [['exploit', '安全搾取ボット（あなたを分析するAI）'], ['cfr', '内蔵CFRボット（理論に忠実なAI）'], ...bots.map(b => [b.id, b.name])];
+  $('#mBot').innerHTML = opts.map(([v, t]) => `<option value="${esc(v)}" ${v === FEST.bot ? 'selected' : ''}>${esc(t)}</option>`).join('');
+  $('#startModal').hidden = false;
+  festRender();
+  setTimeout(() => $('#mName').focus(), 50);
+}
+function festNewPlayer(){
+  clearTimeout(G.botTimer);
+  resetMatch();
+  G.started = false; G.over = false; G.hand = 0;
+  FEST.played = 0; FEST.active = false; FEST.over = false; FEST.entryTs = 0;
+  clearInterval(FEST.timer); FEST.timeUp = false; FEST.endAt = 0;
+  X.obs = []; updateExploit();
+  logItems = []; $('#log').innerHTML = '';
+  $('#resultModal').hidden = true;
+  render(); festRender(); renderBots(); renderExploit();
+  openStart();
+}
+function festStart(){
+  if (!ready()) return;
+  FEST.name = $('#mName').value.trim().slice(0, 12) || 'ゲスト';
+  FEST.bot = $('#mBot').value || FEST.bot; saveFest();
+  currentId = FEST.bot;
+  FEST.active = true;
+  renderStats(); renderExploit(); render();
+  $('#startModal').hidden = true;
+  if (FEST.format === 'time'){
+    FEST.timeUp = false;
+    FEST.endAt = Date.now() + FEST.minutes * 60000;
+    clearInterval(FEST.timer);
+    FEST.timer = setInterval(festTick, 250);
+  }
+  festRender(); renderBots();
+  startHand();
+}
+function festAfterHand(){
+  FEST.played++;
+  const done = FEST.format === 'time' ? FEST.timeUp : FEST.played >= FEST.hands;
+  if (done || M.over){ festEndGame(); return; }
+  festRender();
+}
+function showResult(){
+  if (!FEST.over) return;
+  const score = M.you - START_STACK;
+  const list = loadRank().filter(r => r.day === today()).sort((a, b) => b.score - a.score || a.ts - b.ts);
+  const pos = list.findIndex(r => r.ts === FEST.entryTs) + 1;
+  $('#rName').textContent = `${FEST.name} さん`;
+  const rs = $('#rScore');
+  rs.textContent = fmtScore(score);
+  rs.className = 'big-score ' + (score > 0 ? 'pos-v' : score < 0 ? 'neg-v' : '');
+  $('#rRank').textContent = pos ? `今日の ${pos} 位（${list.length} 人中）` : '';
+  const st = X.st;
+  let type, desc;
+  if (!st || !st.n || st.map < 0){ type = '判定できませんでした'; desc = '診断に使える行動が足りませんでした。'; }
+  else if (st.unknown){ type = 'ミステリアス型'; desc = 'AIの知っているどのタイプにも当てはまりませんでした。読まれにくい打ち方です。'; }
+  else {
+    const [name, d] = STYLE[st.map];
+    type = st.conf >= 0.5 ? `${name}タイプ！` : `${name}寄りかも？`;
+    desc = d;
+  }
+  $('#rType').textContent = type;
+  $('#rDesc').textContent = desc;
+  $('#resultModal').hidden = false;
+  $('#rNext').focus();
+}
+function applyMode(){
+  const fest = FEST.mode === 'festival';
+  document.body.classList.toggle('festival', fest);
+  clearTimeout(G.botTimer);
+  statsMode = fest ? 'festival' : 'research';
+  $('#xDetail').open = !fest;
+  stats = store.get(statsKey()) || {};
+  if (fest){
+    FEST.researchId = currentId;
+    if (!(FEST.bot === 'cfr' || FEST.bot === 'exploit' || bots.some(b => b.id === FEST.bot))) FEST.bot = 'exploit';
+    currentId = FEST.bot;
+    showTab('rank');
+    renderStats();
+    festNewPlayer();
+  } else {
+    showTab('opp');
+    $('#startModal').hidden = true; $('#resultModal').hidden = true;
+    FEST.active = false; FEST.over = false;
+    currentId = FEST.researchId;
+    if (X.ready){ loadExploit(); updateExploit(); }
+    resetMatch();
+    G.started = false; G.over = false;
+    renderBots(); renderStats(); render(); renderExploit();
+  }
+}
+$('#mStart').addEventListener('click', festStart);
+$('#mName').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); festStart(); } });
+$('#rNext').addEventListener('click', festNewPlayer);
+$('#toResearch').addEventListener('click', () => {
+  if (!confirm('研究者モードに切り替えますか？（スタッフ用）')) return;
+  FEST.mode = 'research'; saveFest(); applyMode();
+});
+$('#toFestival').addEventListener('click', () => {
+  FEST.hands = +$('#cfgHands').value; FEST.format = $('#cfgFormat').value; FEST.minutes = +$('#cfgMin').value;
+  FEST.mode = 'festival'; saveFest(); applyMode();
+});
+$('#cfgHands').addEventListener('change', e => { FEST.hands = +e.target.value; saveFest(); });
+$('#cfgFormat').addEventListener('change', e => { FEST.format = e.target.value; saveFest(); });
+$('#cfgMin').addEventListener('change', e => { FEST.minutes = +e.target.value; saveFest(); });
+$('#clearRank').addEventListener('click', () => {
+  if (!confirm('ランキングの記録をすべて消去しますか？')) return;
+  store.set('leduc-fest-rank-v1', []);
+  msg('#festMsg', 'ランキングを消去しました。', 'ok');
+  festRender();
+});
+
 /* ---------- boot ---------- */
 (function boot(){
   const saved = store.get('leduc-bots-v1');
@@ -1781,10 +2212,12 @@ $('#xReset').addEventListener('click', () => {
   }
 })();
 showTab('opp');
+$('#cfgHands').value = String(FEST.hands); $('#cfgFormat').value = FEST.format; $('#cfgMin').value = String(FEST.minutes);
 renderBots();
 renderStats();
 render();
 renderExploit();
+if (FEST.mode === 'festival') applyMode(); else festRender();
 setTimeout(trainChunk, 50);
 })();
 </script>
